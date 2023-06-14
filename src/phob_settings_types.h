@@ -1,0 +1,6 @@
+#ifndef PHOB_SETTINGS_TYPES_H
+#define PHOB_SETTINGS_TYPES_H
+
+
+
+#endif

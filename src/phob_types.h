@@ -1,70 +1,127 @@
-#ifndef ENUMS_H
-#define ENUMS_H
+#ifndef PHOB_TYPES_H
+#define PHOB_TYPES_H
 
-#include <stdint.h>
+#include "stdint.h"
 
-enum JumpConfig {
-	DEFAULTJUMP,
-	SWAP_XZ,
-	SWAP_YZ,
-	SWAP_XL,
-	SWAP_YL,
-	SWAP_XR,
-	SWAP_YR
-};
+typedef enum
+{
+  DEFAULTJUMP,
+  SWAP_XZ,
+  SWAP_YZ,
+  SWAP_XL,
+  SWAP_YL,
+  SWAP_XR,
+  SWAP_YR
+} JumpConfig_t;
 
-enum WhichTrigger {
-	LTRIGGER,
-	RTRIGGER
-};
+typedef enum
+{
+  LTRIGGER,
+  RTRIGGER
+} WhichTrigger_t;
 
-enum Increase {
-	INCREASE,
-	DECREASE
-};
+typedef enum
+{
+  MASTER = 0,
+  STORAGE = 1,
+} PageIndexes_t;
 
-enum WhichAxis {
-	XAXIS,
-	YAXIS
-};
+typedef enum
+{
+  INCREASE,
+  DECREASE
+} Increase_t;
 
-enum WhichStick {
-	ASTICK,
-	CSTICK
-};
+typedef enum
+{
+  X_AXIS,
+  Y_AXIS
+} WhichAxis_t;
 
-enum HardReset {
-	HARD,
-	SOFT,
-	FACTORY
-};
+typedef enum
+{
+  A_STICK,
+  C_STICK
+} WhichStick_t;
 
-enum NotchStatus {
-	TERT_INACTIVE,
-	TERT_ACTIVE,
-	SECONDARY,
-	CARDINAL
-};
+typedef enum
+{
+  HARD_RESET,
+  SOFT_RESET,
+  FACTORY_RESET
+} HardReset_t;
 
-enum ExtrasSlot{
-	EXTRAS_UP,
-	EXTRAS_DOWN,
-	EXTRAS_LEFT,
-	EXTRAS_RIGHT,
-	EXTRAS_SIZE,
-	EXTRAS_UNSET
-};
+typedef enum
+{
+  TERT_INACTIVE,
+  TERT_ACTIVE,
+  SECONDARY,
+  CARDINAL
+} NotchStatus_t;
 
-union IntOrFloat{
-	int intValue;
-	float floatValue;
-};
+typedef enum
+{
+  EXTRAS_UP,
+  EXTRAS_DOWN,
+  EXTRAS_LEFT,
+  EXTRAS_RIGHT,
+  EXTRAS_SIZE,
+  EXTRAS_UNSET
+} ExtrasSlot_t;
 
-struct ExtrasConfig{
-	IntOrFloat config[4];
-};
+typedef union
+{
+  int intValue;
+  float floatValue;
+} IntOrFloat_u;
 
-struct Pins{
+typedef struct
+{
+  IntOrFloat_u config[4];
+} ExtrasConfig_s;
+
+// Configuration Struct
+typedef struct
+{
+  JumpConfig_t jump;
+  int l;
+  int r;
+  int lOffset;
+  int rOffset;
+  int cxOffset;
+  int cyOffset;
+  int xSnapback;
+  int ySnapback;
+  int xSmoothing;
+  int ySmoothing;
+  int cxSmoothing;
+  int cySmoothing;
+  int rumble;
+  int autoInit;
+  int axWaveshaping;
+  int ayWaveshaping;
+  int cxWaveshaping;
+  int cyWaveshaping;
+  float axPoints[32];
+  float ayPoints[32];
+  float cxPoints[32];
+  float cyPoints[32];
+  float aAngles[16];
+  float cAngles[16];
+  IntOrFloat_u uExtras[4];
+  IntOrFloat_u dExtras[4];
+  IntOrFloat_u lExtras[4];
+  IntOrFloat_u rExtras[4];
+  int schema;
+  int AstickCardinalSnapping;
+  int CstickCardinalSnapping;
+  int AstickAnalogScaler;
+  int CstickAnalogScaler;
+  int interlaceOffset;
+  int tournamentToggle;
+} __attribute__((packed)) Settings_s;
+
+typedef struct{
 	int pinLa;
 	int pinRa;
 	int pinL;
@@ -85,9 +142,9 @@ struct Pins{
 	int pinB;
 	int pinZ;
 	int pinS;
-};
+} Pins_s;
 
-union Buttons{
+typedef union{
 	uint8_t arr[10];
 	struct {
 
@@ -126,17 +183,17 @@ union Buttons{
 		uint8_t magic1 : 8;
 		uint8_t magic2 : 8;
 	};
-};
+} Buttons_u;
 
-struct HardwareButtons{
+typedef struct {
 	uint8_t L;
 	uint8_t R;
 	uint8_t Z;
 	uint8_t X;
 	uint8_t Y;
-};
+} HardwareButtons_s;
 
-struct RawStick{
+typedef struct{
 	float axRaw;
 	float ayRaw;
 	float cxRaw;
@@ -149,17 +206,17 @@ struct RawStick{
 	float ayUnfiltered;
 	float cxUnfiltered;
 	float cyUnfiltered;
-};
+} RawStick_s;
 
-struct Cardinals{
+typedef struct {
 	uint8_t l : 1;
 	uint8_t r : 1;
 	uint8_t u : 1;
 	uint8_t d : 1;
-};
+} Cardinals_s;
 
-struct ControlConfig{
-	JumpConfig jumpConfig;
+typedef struct {
+	JumpConfig_t jumpConfig;
 	const int jumpConfigMin;
 	const int jumpConfigMax;
 	int lConfig;
@@ -229,10 +286,10 @@ struct ControlConfig{
 	const int interlaceOffsetMin;
 	const int interlaceOffsetMax;
 #endif //PICO_RP2040
-	ExtrasConfig extras[EXTRAS_SIZE];
-};
+	ExtrasConfig_s extras[EXTRAS_SIZE];
+} ControlConfig_s;
 
-struct FilterGains {
+typedef struct {
 	//What's the max stick distance from the center
 	float maxStick;
 	//filtered velocity terms
@@ -265,9 +322,9 @@ struct FilterGains {
 	//Same thing but for C-stick
 	float cXSmoothing;
 	float cYSmoothing;
-};
+} FilterGains_s;
 
-struct StickParams{
+typedef struct {
 	//these are the linearization coefficients
 	float fitCoeffsX[4];
 	float fitCoeffsY[4];
@@ -275,9 +332,9 @@ struct StickParams{
 	//these are the notch remap parameters
 	float affineCoeffs[16][4]; //affine transformation coefficients for all regions of the stick
 	float boundaryAngles[16]; //angles at the boundaries between regions of the stick (in the plane)
-};
+} StickParams_s;
 
-enum CaptureMode{
+typedef enum {
 	CM_NULL,//do nothing
 	CM_REACTION,//record immediately
 	CM_STICK_RISE2,//starting when a stick coord exceeds a threshold distance from center; 100 pt 2-axis
@@ -287,9 +344,9 @@ enum CaptureMode{
 	CM_TRIG,//increasing threshold on triggers
 	CM_JUMP,//x, y, or melee tap jump threshold
 	CM_PRESS,//any button press
-};
+} CaptureMode_t;
 
-enum GraphVar{
+typedef enum {
 	GV_AX,//a-stick x-axis filtered & unfiltered
 	GV_AY,
 	GV_AXY,//a-stick x and y, only filtered
@@ -298,16 +355,16 @@ enum GraphVar{
 	GV_CXY,
 	GV_L,
 	GV_R,
-};
+} GraphVar_t;
 
-struct DataCapture{
+typedef struct {
 	//these are the params
-	CaptureMode mode;
-	WhichStick triggerStick;
-	WhichStick captureStick;
-	WhichAxis whichAxis;
+	CaptureMode_t mode;
+	WhichStick_t triggerStick;
+	WhichStick_t captureStick;
+	WhichAxis_t whichAxis;
 	uint8_t stickmap;//which stickmap to display
-	GraphVar graphVar;//which variable to graph
+	GraphVar_t graphVar;//which variable to graph
 	bool begin;
 	bool triggered;
 	bool done;
@@ -325,6 +382,6 @@ struct DataCapture{
 	uint8_t abxyszrl[200];//12 frames
 	uint8_t axaycxcyrl[200];//12 frames
 	float percents[3];
-};
+} DataCapture_s;
 
-#endif //ENUMS_H
+#endif

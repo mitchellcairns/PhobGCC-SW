@@ -10,45 +10,7 @@ namespace Pages {
 struct Storage {
 	static const int index = (int) PageIndexes::STORAGE;
 
-	struct __attribute__((packed)) Settings {
-		JumpConfig jump;
-		int l;
-		int r;
-		int lOffset;
-		int rOffset;
-		int cxOffset;
-		int cyOffset;
-		int xSnapback;
-		int ySnapback;
-		int xSmoothing;
-		int ySmoothing;
-		int cxSmoothing;
-		int cySmoothing;
-		int rumble;
-		int autoInit;
-		int axWaveshaping;
-		int ayWaveshaping;
-		int cxWaveshaping;
-		int cyWaveshaping;
-		float axPoints[32];
-		float ayPoints[32];
-		float cxPoints[32];
-		float cyPoints[32];
-		float aAngles[16];
-		float cAngles[16];
-		IntOrFloat uExtras[4];
-		IntOrFloat dExtras[4];
-		IntOrFloat lExtras[4];
-		IntOrFloat rExtras[4];
-		int schema;
-		int AstickCardinalSnapping;
-		int CstickCardinalSnapping;
-		int AstickAnalogScaler;
-		int CstickAnalogScaler;
-		int interlaceOffset;
-		int tournamentToggle;
-	} settings;
-};
+
 
 }
 }

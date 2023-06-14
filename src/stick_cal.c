@@ -1,10 +1,9 @@
-#ifndef STICKCAL_H
-#define STICKCAL_H
 
-#include <cmath>
 
+#include <math.h>
+#include <stdbool.h>
 #include "curveFitting.h"
-#include "structsAndEnums.h"
+#include "stick_cal.h"
 #include "filter.h"
 
 //TODO: either put these const globals in varables.h or make them #defines
@@ -60,7 +59,7 @@ const float _defaultCalPointsY[_noOfCalibrationPoints] =  {
 //                                                         0            1            2            3            4            5            6            7            8            9            10           11           12           13           14           15
 const int _calOrder[_noOfCalibrationPoints] =             {0, 1,        8, 9,       16, 17,       24, 25,      4, 5,        12, 13,      20, 21,      28, 29,      2, 3,        6, 7,        10, 11,      14, 15,      18, 19,      22, 23,      26, 27,      30, 31};
 const float _notchAngleDefaults[_noOfNotches] =           {0,           M_PI/8.0,    M_PI*2/8.0,  M_PI*3/8.0,  M_PI*4/8.0,  M_PI*5/8.0,  M_PI*6/8.0,  M_PI*7/8.0,  M_PI*8/8.0,  M_PI*9/8.0,  M_PI*10/8.0, M_PI*11/8.0, M_PI*12/8.0, M_PI*13/8.0, M_PI*14/8.0, M_PI*15/8.0};
-const NotchStatus _notchStatusDefaults[_noOfNotches] =    {CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE};
+const NotchStatus_t _notchStatusDefaults[_noOfNotches] =    {CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE};
 //                                                         up right     up left      down left    down right   notch 1      notch 2      notch 3      notch 4      notch 5      notch 6      notch 7      notch 8
 const int _notchAdjOrder[_noOfAdjNotches] =               {2,           6,           10,          14,          1,           3,           5,           7,           9,           11,          13,          15};
 
@@ -82,10 +81,10 @@ void calcStickValues(float angle, float* x, float* y){
  * We first convert to a 3D coordinate and then drop to 2D, then arctan it
  * This does the opposite of calcStickValues, ideally.
  */
-void angleOnSphere(const float x, const float y, float& angle){
+void angleOnSphere(const float x, const float y, float *angle){
 	float xx = sinf(x*_maxStickAngle/100) * cosf(y*_maxStickAngle/100);
 	float yy = cosf(x*_maxStickAngle/100) * sinf(y*_maxStickAngle/100);
-	angle = atan2f(yy, xx);//WHY IS THIS BACKWARDS
+	*angle = atan2f(yy, xx);//WHY IS THIS BACKWARDS
 	if(angle < 0){
 		angle += 2*M_PI;
 	}
@@ -120,12 +119,12 @@ void computeStickAngles(float xInput[], float yInput[], float stickAngles[]){
 		if(i%2 == 0){//cardinal or diagonal
 			stickAngles[i] = _notchAngleDefaults[i];
 		} else {
-			angleOnSphere(xInput[i+1], yInput[i+1], stickAngles[i]);
+			angleOnSphere(xInput[i+1], yInput[i+1], &stickAngles[i]);
 		}
 	}
 };
 //sets notches to measured values if absent
-void cleanNotches(float notchAngles[], float measuredNotchAngles[], NotchStatus notchStatus[]){
+void cleanNotches(float notchAngles[], float measuredNotchAngles[], NotchStatus_t notchStatus[]){
 	for(int i=0; i < _noOfNotches; i++){
 		if(notchStatus[i] == TERT_INACTIVE){
 			notchAngles[i] = measuredNotchAngles[i];
@@ -137,12 +136,12 @@ void cleanNotches(float notchAngles[], float measuredNotchAngles[], NotchStatus 
 	notchRemap
 	Remaps the stick position using affine transforms generated from the notch positions
 *******************/
-void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, const int regions, const StickParams &stickParams, int currentCalStep, const ControlConfig &controls, const WhichStick whichStick){
+void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, const int regions, const StickParams_s *stickParams, int currentCalStep, const ControlConfig *controls, const WhichStick whichStick){
 	//determine the angle between the x unit vector and the current position vector
 	float angle = atan2f(yIn,xIn);
 
 	//unwrap the angle based on the first region boundary
-	if(angle < stickParams.boundaryAngles[0]){
+	if(angle < stickParams->boundaryAngles[0]){
 		angle += M_PI*2;
 	}
 
@@ -152,21 +151,21 @@ void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, cons
 	//int region = regions*2-1;
 	int region = regions-1;
 	for(int i = 1; i < regions; i++){
-		if(angle < stickParams.boundaryAngles[i]){
+		if(angle < stickParams->boundaryAngles[i]){
 			region = i-1;
 			break;
 		}
 	}
 
 	//Apply the affine transformation using the coefficients found during calibration
-	*xOut = stickParams.affineCoeffs[region][0]*xIn + stickParams.affineCoeffs[region][1]*yIn;
-	*yOut = stickParams.affineCoeffs[region][2]*xIn + stickParams.affineCoeffs[region][3]*yIn;
+	*xOut = stickParams->affineCoeffs[region][0]*xIn + stickParams->affineCoeffs[region][1]*yIn;
+	*yOut = stickParams->affineCoeffs[region][2]*xIn + stickParams->affineCoeffs[region][3]*yIn;
 
 	float stickScale;
-	if(whichStick == ASTICK) {
-		stickScale = controls.astickAnalogScaler/100.0f;
+	if(whichStick == A_STICK) {
+		stickScale = controls->astickAnalogScaler/100.0f;
 	} else {
-		stickScale = controls.cstickAnalogScaler/100.0f;
+		stickScale = controls->cstickAnalogScaler/100.0f;
 	}
 
 	*xOut *= stickScale;
@@ -174,15 +173,15 @@ void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, cons
 
 	if(currentCalStep == -1) {
 
-		if(whichStick == ASTICK) {
-			if(controls.astickCardinalSnapping > 0) {
-				if((abs(*xOut)<controls.astickCardinalSnapping+0.5) && (abs(*yOut)>=79.5)){
+		if(whichStick == A_STICK) {
+			if(controls->astickCardinalSnapping > 0) {
+				if((abs(*xOut)<controls->astickCardinalSnapping+0.5) && (abs(*yOut)>=79.5)){
 					*xOut = 0;
 				}
-				if((abs(*yOut)<controls.astickCardinalSnapping+0.5) && (abs(*xOut)>=79.5)){
+				if((abs(*yOut)<controls->astickCardinalSnapping+0.5) && (abs(*xOut)>=79.5)){
 					*yOut = 0;
 				}
-			} else if(controls.astickCardinalSnapping == -1) {
+			} else if(controls->astickCardinalSnapping == -1) {
 				if((abs(*xOut)<6.5) && (abs(*yOut)>=79.5)){
 					*xOut = 7;
 				}
@@ -191,14 +190,14 @@ void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, cons
 				}
 			}
 		} else {
-			if(controls.cstickCardinalSnapping > 0) {
-				if((abs(*xOut)<controls.cstickCardinalSnapping+0.5) && (abs(*yOut)>=79.5)){
+			if(controls->cstickCardinalSnapping > 0) {
+				if((abs(*xOut)<controls->cstickCardinalSnapping+0.5) && (abs(*yOut)>=79.5)){
 					*xOut = 0;
 				}
-				if((abs(*yOut)<controls.cstickCardinalSnapping+0.5) && (abs(*xOut)>=79.5)){
+				if((abs(*yOut)<controls->cstickCardinalSnapping+0.5) && (abs(*xOut)>=79.5)){
 					*yOut = 0;
 				}
-			} else if(controls.cstickCardinalSnapping == -1) {
+			} else if(controls->cstickCardinalSnapping == -1) {
 				if((abs(*xOut)<6.5) && (abs(*yOut)>=79.5)){
 					*xOut = 7;
 				}
@@ -220,10 +219,10 @@ void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, cons
  * remaps the cleaned calibration points from raw measurements to output coordinates
  * This seems redundant but we're feeding it coordinates without non-diagonal notches
  */
-void transformCalPoints(const float xInput[], const float yInput[], float xOutput[], float yOutput[], const StickParams &stickParams, const ControlConfig &controls, const WhichStick whichStick){
+void transformCalPoints(const float xInput[], const float yInput[], float xOutput[], float yOutput[], const StickParams_s *stickParams, const ControlConfig_s *controls, const WhichStick_t whichStick){
 	for(int i=0; i < _noOfNotches+1; i++){
-		float xValue = linearize(xInput[i], stickParams.fitCoeffsX);
-		float yValue = linearize(yInput[i], stickParams.fitCoeffsY);
+		float xValue = linearize(xInput[i], stickParams->fitCoeffsX);
+		float yValue = linearize(yInput[i], stickParams->fitCoeffsY);
 		float outX;
 		float outY;
 		notchRemap(xValue, yValue, &outX, &outY, _noOfNotches, stickParams, 0, controls, whichStick);
@@ -237,7 +236,7 @@ void transformCalPoints(const float xInput[], const float yInput[], float xOutpu
 	take the x and y coordinates and notch angles collected during the calibration procedure,
 	and generate the cleaned (non-redundant) x and y stick coordinates and the corresponding x and y notch coordinates
 *******************/
-void cleanCalPoints(const float calPointsX[], const float calPointsY[], const float notchAngles[], float cleanedPointsX[], float cleanedPointsY[], float notchPointsX[], float notchPointsY[], NotchStatus notchStatus[]){
+void cleanCalPoints(const float calPointsX[], const float calPointsY[], const float notchAngles[], float cleanedPointsX[], float cleanedPointsY[], float notchPointsX[], float notchPointsY[], NotchStatus_t notchStatus[]){
 
 	debug_println("The raw calibration points (x,y) are:");
 	for(int i = 0; i< _noOfCalibrationPoints; i++){
@@ -377,7 +376,7 @@ void cleanCalPoints(const float calPointsX[], const float calPointsY[], const fl
 //The notch adjustment is limited in order to control
 //1. displacement of points (max 12 units out of +/- 100, for now)
 //2. stretching of coordinates (max +/- 30%)
-void legalizeNotch(const int notchIndex, float measuredNotchAngles[], float notchAngles[], NotchStatus notchStatus[]){
+void legalizeNotch(const int notchIndex, float measuredNotchAngles[], float notchAngles[], NotchStatus_t notchStatus[]){
 	//Limit the notch adjustment
 
 	//Start out with the limits being 12 units around the circle at the gate
@@ -461,7 +460,7 @@ void legalizeNotch(const int notchIndex, float measuredNotchAngles[], float notc
 	notchAngles[notchIndex] = fmin(notchAngles[notchIndex], upperLimit);
 }
 
-void legalizeNotches(const int currentStepIn, float measuredNotchAngles[], float notchAngles[], NotchStatus notchStatus[]){
+void legalizeNotches(const int currentStepIn, float measuredNotchAngles[], float notchAngles[], NotchStatus_t notchStatus[]){
 	for(int i=currentStepIn; i < 44; i++) {
 		const int notchIndex = _notchAdjOrder[i-_noOfCalibrationPoints];
 		legalizeNotch(notchIndex, measuredNotchAngles, notchAngles, notchStatus);
@@ -471,11 +470,11 @@ void legalizeNotches(const int currentStepIn, float measuredNotchAngles[], float
 //adjustNotch is used to adjust the angles of the notch.
 //It is run after calibration points are collected.
 //It runs a legalization routine to limit subsequent notches
-void adjustNotch(const int currentStepIn, const float loopDelta, const WhichStick whichStick, float measuredNotchAngles[], float notchAngles[], NotchStatus notchStatus[], Buttons &btn, Buttons &hardware){
+void adjustNotch(const int currentStepIn, const float loopDelta, const WhichStick_t whichStick, float measuredNotchAngles[], float notchAngles[], NotchStatus_t notchStatus[], Buttons_u *btn, Buttons_u *hardware){
 	//set up variables based on current button state
-	bool CW = hardware.X;
-	bool CCW = hardware.Y;
-	bool reset = btn.B;
+	bool CW = hardware->X;
+	bool CCW = hardware->Y;
+	bool reset = btn->B;
 
 	//This gets run after all the calibration points are collected
 	//So we subtract the number of calibration points and switch over to notch adjust order
@@ -485,12 +484,12 @@ void adjustNotch(const int currentStepIn, const float loopDelta, const WhichStic
 	float x = 0;
 	float y = 0;
 	calcStickValues(measuredNotchAngles[notchIndex], &x, &y);
-	if(whichStick == ASTICK){
-		btn.Cx = (uint8_t) (x + _floatOrigin);
-		btn.Cy = (uint8_t) (y + _floatOrigin);
+	if(whichStick == A_STICK){
+		btn->Cx = (uint8_t) (x + _floatOrigin);
+		btn->Cy = (uint8_t) (y + _floatOrigin);
 	} else {
-		btn.Ax = (uint8_t) (x + _floatOrigin);
-		btn.Ay = (uint8_t) (y + _floatOrigin);
+		btn->Ax = (uint8_t) (x + _floatOrigin);
+		btn->Ay = (uint8_t) (y + _floatOrigin);
 	}
 
 	//do nothing if it's not a valid notch to calibrate
@@ -515,7 +514,7 @@ void adjustNotch(const int currentStepIn, const float loopDelta, const WhichStic
 };
 
 //displayNotch is used in lieu of adjustNotch when doing basic calibration
-void displayNotch(const int currentStepIn, const bool calibratingAStick, const float notchAngles[], Buttons &btn){
+void displayNotch(const int currentStepIn, const bool calibratingAStick, const float notchAngles[], Buttons_u *btn){
 	int currentStep = _calOrder[currentStepIn];
 	//display the desired value on the other stick
 	float x = 0;
@@ -525,15 +524,15 @@ void displayNotch(const int currentStepIn, const bool calibratingAStick, const f
 		calcStickValues(notchAngles[notchIndex], &x, &y);
 	}
 	if(calibratingAStick){
-		btn.Cx = (uint8_t) (x + _floatOrigin);
-		btn.Cy = (uint8_t) (y + _floatOrigin);
+		btn->Cx = (uint8_t) (x + _floatOrigin);
+		btn->Cy = (uint8_t) (y + _floatOrigin);
 	}else{
-		btn.Ax = (uint8_t) (x + _floatOrigin);
-		btn.Ay = (uint8_t) (y + _floatOrigin);
+		btn->Ax = (uint8_t) (x + _floatOrigin);
+		btn->Ay = (uint8_t) (y + _floatOrigin);
 	}
 };
 
-void insertCalPoints(const WhichStick whichStick, const int currentStepIn, float calPointsX[], float calPointsY[], Pins &pin, float X, float Y){
+void insertCalPoints(const WhichStick_t whichStick, const int currentStepIn, float calPointsX[], float calPointsY[], Pins_s *pin, float X, float Y){
 	debug_print("Inserting cal point for step: ");
 	debug_println(currentStepIn);
     const int currentStep = _calOrder[currentStepIn];
@@ -557,7 +556,7 @@ void insertCalPoints(const WhichStick whichStick, const int currentStepIn, float
 	Outputs:
 		linearization fit coefficients for X and Y
 *******************/
-void linearizeCal(const float inX[], const float inY[], float outX[], float outY[], StickParams &stickParams){
+void linearizeCal(const float inX[], const float inY[], float outX[], float outY[], StickParams_s *stickParams){
 	debug_println("beginning linearization");
 
 	//do the curve fit first
@@ -610,30 +609,30 @@ void linearizeCal(const float inX[], const float inY[], float outX[], float outY
 
 	//write these coefficients to the array that was passed in, this is our first output
 	for(int i = 0; i < (_fitOrder+1); i++){
-		stickParams.fitCoeffsX[i] = tempCoeffsX[i];
-		stickParams.fitCoeffsY[i] = tempCoeffsY[i];
+		stickParams->fitCoeffsX[i] = tempCoeffsX[i];
+		stickParams->fitCoeffsY[i] = tempCoeffsY[i];
 	}
 
 	//we will now take out the offset, making the range -100 to 100 instead of 28 to 228
 	//calculate the offset
-	float xZeroError = linearize((float)fitPointsX[2], stickParams.fitCoeffsX);
-	float yZeroError = linearize((float)fitPointsY[2], stickParams.fitCoeffsY);
+	float xZeroError = linearize((float)fitPointsX[2], stickParams->fitCoeffsX);
+	float yZeroError = linearize((float)fitPointsY[2], stickParams->fitCoeffsY);
 
 	//Adjust the fit's constant coefficient so that the stick zero position is 0
-	stickParams.fitCoeffsX[3] = stickParams.fitCoeffsX[3] - xZeroError;
-	stickParams.fitCoeffsY[3] = stickParams.fitCoeffsY[3] - yZeroError;
+	stickParams->fitCoeffsX[3] = stickParams->fitCoeffsX[3] - xZeroError;
+	stickParams->fitCoeffsY[3] = stickParams->fitCoeffsY[3] - yZeroError;
 
 	debug_println("The fit coefficients are  are (x,y):");
 	for(int i = 0; i < 4; i++){
-		debug_print(stickParams.fitCoeffsX[i]);
+		debug_print(stickParams->fitCoeffsX[i]);
 		debug_print(",");
-		debug_println(stickParams.fitCoeffsY[i]);
+		debug_println(stickParams->fitCoeffsY[i]);
 	}
 
 	debug_println("The linearized points are:");
 	for(int i = 0; i <= _noOfNotches; i++){
-		outX[i] = linearize(inX[i], stickParams.fitCoeffsX);
-		outY[i] = linearize(inY[i], stickParams.fitCoeffsY);
+		outX[i] = linearize(inX[i], stickParams->fitCoeffsX);
+		outY[i] = linearize(inY[i], stickParams->fitCoeffsY);
 		debug_print(outX[i],8);
 		debug_print(",");
 		debug_println(outY[i],8);
@@ -641,7 +640,7 @@ void linearizeCal(const float inX[], const float inY[], float outX[], float outY
 };
 
 //Self-explanatory.
-void inverse(const float in[3][3], float (&out)[3][3])
+void inverse(const float in[3][3], float out[3][3])
 {
 	float det = in[0][0] * (in[1][1]*in[2][2] - in[2][1]*in[1][2]) -
 	            in[0][1] * (in[1][0]*in[2][2] - in[1][2]*in[2][0]) +
@@ -660,7 +659,7 @@ void inverse(const float in[3][3], float (&out)[3][3])
 }
 
 //Self-explanatory.
-void matrixMatrixMult(const float left[3][3], const float right[3][3], float (&output)[3][3])
+void matrixMatrixMult(const float left[3][3], const float right[3][3], float output[3][3])
 {
 	for (int i = 0; i < 3; i++)
 	{
@@ -693,7 +692,7 @@ void print_mtx(const float matrix[3][3]){
 };
 
 
-void notchCalibrate(const float xIn[], const float yIn[], const float xOut[], const float yOut[], const int regions, StickParams &stickParams){
+void notchCalibrate(const float xIn[], const float yIn[], const float xOut[], const float yOut[], const int regions, StickParams *stickParams){
 	for(int i = 1; i <= regions; i++){
 		debug_print("calibrating region: ");
 		debug_println(i);
@@ -761,21 +760,19 @@ void notchCalibrate(const float xIn[], const float yIn[], const float xOut[], co
 
 		for(int j = 0; j <2;j++){
 			for(int k = 0; k<2;k++){
-				stickParams.affineCoeffs[i-1][j*2+k] = A[j][k];
-				debug_print(stickParams.affineCoeffs[i-1][j*2+k]);
+				stickParams->affineCoeffs[i-1][j*2+k] = A[j][k];
+				debug_print(stickParams->affineCoeffs[i-1][j*2+k]);
 				debug_print(",");
 			}
 		}
 
 		debug_println();
 		debug_println("The angle defining this  regions is:");
-		stickParams.boundaryAngles[i-1] = atan2f((yIn[i]-yIn[0]),(xIn[i]-xIn[0]));
+		stickParams->boundaryAngles[i-1] = atan2f((yIn[i]-yIn[0]),(xIn[i]-xIn[0]));
 		//unwrap the angles so that the first has the smallest value
-		if(stickParams.boundaryAngles[i-1] < stickParams.boundaryAngles[0]){
-			stickParams.boundaryAngles[i-1] += M_PI*2;
+		if(stickParams->boundaryAngles[i-1] < stickParams->boundaryAngles[0]){
+			stickParams->boundaryAngles[i-1] += M_PI*2;
 		}
-		debug_println(stickParams.boundaryAngles[i-1]);
+		debug_println(stickParams->boundaryAngles[i-1]);
 	}
 };
-
-#endif //STICKCAL_H

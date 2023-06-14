@@ -1,28 +1,12 @@
 /*
-  curveFitting.h - Library for fitting curves to given
+  curveFitting.c - Library for fitting curves to given
   points using Least Squares method, with Cramer's rule
   used to solve the linear equation. Max polynomial order 20.
   Created by Rowan Easter-Robinson, August 23, 2018.
   Released into the public domain.
 */
-
-#ifndef curveFit_h
-#define curveFit_h
-
-#define MAX_ORDER 20
-
-#ifndef CURVE_FIT_DEBUG
-#define CURVE_FIT_DEBUG 0
-#endif
-
 #include <stdint.h>
-
-/* Enum for error messages */
-enum curveFitERROR{
-	ORDER_AND_NCOEFFS_DO_NOT_MATCH = -1,
-	ORDER_INCORRECT = -2,
-	NPOINTS_INCORRECT = -3
-};
+#include "curveFitting.h"
 
 void cpyArray(double *src, double*dest, int n){
   for (int i = 0; i < n*n; i++){
@@ -92,7 +76,7 @@ double curveFitPower(double base, int exponent){
   }
 }
 
-int fitCurve (int order, int nPoints, double py[], int nCoeffs, double *coeffs) {
+int fitCurve_single (int order, int nPoints, double py[], int nCoeffs, double *coeffs) {
   uint8_t maxOrder = MAX_ORDER;
   if (nCoeffs != order + 1) return ORDER_AND_NCOEFFS_DO_NOT_MATCH; 	// no of coefficients is one larger than the order of the equation
   if (nCoeffs > maxOrder || nCoeffs < 2) return ORDER_INCORRECT; 		//matrix memory hard coded for max of 20 order, which is huge
@@ -182,5 +166,3 @@ int fitCurve (int order, int nPoints, double px[], double py[], int nCoeffs, dou
   }
   return 0;
 }
-
-#endif
