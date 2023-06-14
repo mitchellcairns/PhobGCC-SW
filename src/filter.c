@@ -1,31 +1,19 @@
-#ifndef FILTER_H
-#define FILTER_H
+#include "filter.h"
 
-#include <cmath>
-
-#include "structsAndEnums.h"
-
-//The median filter can be either length 3, 4, or 5.
-#define MEDIANLEN 5
-//Edit MEDIANARRAY to be MEDIANLEN long
-#define MEDIANARRAY {0,0,0,0,0}
-//Comment this define to disable it entirely.
-//#define USEMEDIAN
-
-void runMedian(float &val, float valArray[MEDIANLEN], unsigned int &medianIndex){
+void runMedian(float *val, float valArray[MEDIANLEN], unsigned int *medianIndex){
 	//takes the value, inserts it into the value array, and then
 	// writes the median back to the value
-	valArray[medianIndex] = val;
-	medianIndex = (medianIndex + 1) % MEDIANLEN;
+	valArray[*medianIndex] = *val;
+	*medianIndex = (*medianIndex + 1) % MEDIANLEN;
 
 	//We'll hardcode different sort versions according to how long the median is
 	//These are derived from RawTherapee's median.h.
 #if MEDIANLEN == 3
-	val = fmax(fmin(valArray[0], valArray[1]), fmin(valArray[2], fmax(valArray[0], valArray[1])));
+	*val = fmax(fmin(valArray[0], valArray[1]), fmin(valArray[2], fmax(valArray[0], valArray[1])));
 #elif MEDIANLEN == 4
 	float maximin = fmax(fmin(valArray[0], valArray[1]), fmin(valArray[2], valArray[3]));
 	float minimax = fmin(fmax(valArray[0], valArray[1]), fmax(valArray[2], valArray[3]));
-	val = (maximin + minimax) / 2.0f;
+	*val = (maximin + minimax) / 2.0f;
 #else //MEDIANLEN == 5
 	float tmpArray[MEDIANLEN];
 	float tmp;
@@ -40,7 +28,7 @@ void runMedian(float &val, float valArray[MEDIANLEN], unsigned int &medianIndex)
 	tmpArray[2] = fmax(tmpArray[1], valArray[2]);
 	tmpArray[1] = tmp;
 	tmp         = fmin(tmpArray[2], tmpArray[3]);
-	val         = fmax(tmpArray[1], tmp);
+	*val         = fmax(tmpArray[1], tmp);
 #endif
 }
 
@@ -52,50 +40,50 @@ float velDampFromSnapback(const int snapback) {
 	}
 }
 
-void recomputeGains(const ControlConfig controls, FilterGains &gains, FilterGains &normGains) {
-	//Adjust the snapback and smoothing gains according to the controls config
-	gains.xVelDamp = velDampFromSnapback(controls.xSnapback);
-	gains.yVelDamp = velDampFromSnapback(controls.ySnapback);
+void recomputeGains(const ControlConfig_s *controls, FilterGains_s *gains, FilterGains_s *normGains) {
+	//Adjust the snapback and smoothing gains->according to the controls config
+	gains->xVelDamp = velDampFromSnapback(controls->xSnapback);
+	gains->yVelDamp = velDampFromSnapback(controls->ySnapback);
 
-	gains.xSmoothing = controls.axSmoothing/10.0f;
-	gains.ySmoothing = controls.aySmoothing/10.0f;
+	gains->xSmoothing = controls->axSmoothing/10.0f;
+	gains->ySmoothing = controls->aySmoothing/10.0f;
 
-	gains.cXSmoothing = controls.cxSmoothing/10.0f;
-	gains.cYSmoothing = controls.cySmoothing/10.0f;
+	gains->cXSmoothing = controls->cxSmoothing/10.0f;
+	gains->cYSmoothing = controls->cySmoothing/10.0f;
 
-	//Recompute the intermediate gains used directly by the kalman filter
+	//Recompute the intermediate gains->used directly by the kalman filter
 	//This happens according to the time between loop iterations.
 	//Before, this happened every iteration of runKalman, but now
 	//the event loop runs at a fixed 1000 Hz
 	//Even if it's not *exactly* 1000 Hz, it should be constant enough.
 	//Hopefully.
-	//So now, this should be called any time gains gets changed.
+	//So now, this should be called any time gains->gets changed.
 	const float timeFactor = 1.0 / 1.2;
 	const float timeDivisor = 1.2 / 1.0;
-	normGains.maxStick      = gains.maxStick*gains.maxStick;//we actually use the square
-	normGains.xVelDecay     = gains.xVelDecay      * timeFactor;
-	normGains.yVelDecay     = gains.yVelDecay      * timeFactor;
-	normGains.xVelPosFactor = gains.xVelPosFactor  * timeFactor;
-	normGains.yVelPosFactor = gains.yVelPosFactor  * timeFactor;
-	normGains.xVelDamp      = gains.xVelDamp;
-	if(controls.xSnapback >= 0) {
-		normGains.xVelDamp *= timeDivisor;
+	normGains->maxStick      = gains->maxStick*gains->maxStick;//we actually use the square
+	normGains->xVelDecay     = gains->xVelDecay      * timeFactor;
+	normGains->yVelDecay     = gains->yVelDecay      * timeFactor;
+	normGains->xVelPosFactor = gains->xVelPosFactor  * timeFactor;
+	normGains->yVelPosFactor = gains->yVelPosFactor  * timeFactor;
+	normGains->xVelDamp      = gains->xVelDamp;
+	if(controls->xSnapback >= 0) {
+		normGains->xVelDamp *= timeDivisor;
 	}
-	normGains.yVelDamp      = gains.yVelDamp;
-	if(controls.ySnapback >= 0) {
-		normGains.yVelDamp *= timeDivisor;
+	normGains->yVelDamp      = gains->yVelDamp;
+	if(controls->ySnapback >= 0) {
+		normGains->yVelDamp *= timeDivisor;
 	}
-	normGains.velThresh     = 1/(gains.velThresh   * timeFactor);//slight optimization by using the inverse
-	normGains.accelThresh   = 1/(gains.accelThresh * timeFactor);
-	normGains.velThresh     = normGains.velThresh*normGains.velThresh;//square it because it's used squared
-	normGains.accelThresh   = normGains.accelThresh*normGains.accelThresh;
-	normGains.xSmoothing    = pow(1-gains.xSmoothing, timeDivisor);
-	normGains.ySmoothing    = pow(1-gains.ySmoothing, timeDivisor);
-	normGains.cXSmoothing   = pow(1-gains.cXSmoothing, timeDivisor);
-	normGains.cYSmoothing   = pow(1-gains.cYSmoothing, timeDivisor);
+	normGains->velThresh     = 1/(gains->velThresh   * timeFactor);//slight optimization by using the inverse
+	normGains->accelThresh   = 1/(gains->accelThresh * timeFactor);
+	normGains->velThresh     = normGains->velThresh*normGains->velThresh;//square it because it's used squared
+	normGains->accelThresh   = normGains->accelThresh*normGains->accelThresh;
+	normGains->xSmoothing    = pow(1-gains->xSmoothing, timeDivisor);
+	normGains->ySmoothing    = pow(1-gains->ySmoothing, timeDivisor);
+	normGains->cXSmoothing   = pow(1-gains->cXSmoothing, timeDivisor);
+	normGains->cYSmoothing   = pow(1-gains->cYSmoothing, timeDivisor);
 };
 
-void runKalman(float &xPosFilt, float &yPosFilt, const float xZ,const float yZ, const ControlConfig &controls, const FilterGains &normGains){
+void runKalman(float *xPosFilt, float *yPosFilt, const float xZ,const float yZ, const ControlConfig_s *controls, const FilterGains_s *normGains){
 	//Serial.println("Running Kalman");
 
 	//kalman filter state variables saved across iterations
@@ -109,8 +97,8 @@ void runKalman(float &xPosFilt, float &yPosFilt, const float xZ,const float yZ, 
 	//save previous values of state
 	const float oldXPos = xPos;
 	const float oldYPos = yPos;
-	const float oldXPosFilt = xPosFilt;
-	const float oldYPosFilt = yPosFilt;
+	const float oldXPosFilt = *xPosFilt;
+	const float oldYPosFilt = *yPosFilt;
 	const float oldXVel = xVel;
 	const float oldYVel = yVel;
 	const float oldXVelFilt = xVelFilt;
@@ -129,7 +117,7 @@ void runKalman(float &xPosFilt, float &yPosFilt, const float xZ,const float yZ, 
 	const float oldYPosDiff = oldYPos - oldYPosFilt;
 
 	//compute stick position exponents for weights
-	const float stickDistance2 = fmin(normGains.maxStick, xPos*xPos + yPos*yPos)/normGains.maxStick;//0-1
+	const float stickDistance2 = fmin(normGains->maxStick, xPos*xPos + yPos*yPos)/normGains->maxStick;//0-1
 	const float stickDistance6 = stickDistance2*stickDistance2*stickDistance2;
 
 	//the current velocity weight for the filtered velocity is the stick r^2
@@ -160,46 +148,46 @@ void runKalman(float &xPosFilt, float &yPosFilt, const float xZ,const float yZ, 
 	//term 3: the integral error correction term
 
 	//But if we xSnapback or ySnapback is zero, we skip the calculation
-	if(controls.xSnapback > 0){
-		xVelFilt = velWeight1*xVel + (1-normGains.xVelDecay)*velWeight2*oldXVelFilt + normGains.xVelPosFactor*oldXPosDiff;
+	if(controls->xSnapback > 0){
+		xVelFilt = velWeight1*xVel + (1-normGains->xVelDecay)*velWeight2*oldXVelFilt + normGains->xVelPosFactor*oldXPosDiff;
 
-		const float xPosWeightVelAcc = 1 - fmin(1, xVelSmooth*xVelSmooth*normGains.velThresh + xAccel*xAccel*normGains.accelThresh);
+		const float xPosWeightVelAcc = 1 - fmin(1, xVelSmooth*xVelSmooth*normGains->velThresh + xAccel*xAccel*normGains->accelThresh);
 		const float xPosWeight1 = fmax(xPosWeightVelAcc, stickDistance6);
 		const float xPosWeight2 = 1-xPosWeight1;
 
-		xPosFilt = xPosWeight1*xPos +
-				   xPosWeight2*(oldXPosFilt + (1-normGains.xVelDamp)*xVelFilt);
-	} else if(controls.xSnapback < 0) {
-		const float xLPF = oldXPosFilt*normGains.xVelDamp + xPos*(1-normGains.xVelDamp);
+		*xPosFilt = xPosWeight1*xPos +
+				   xPosWeight2*(oldXPosFilt + (1-normGains->xVelDamp)*xVelFilt);
+	} else if(controls->xSnapback < 0) {
+		const float xLPF = oldXPosFilt*normGains->xVelDamp + xPos*(1-normGains->xVelDamp);
 
-		const float xPosWeightVelAcc = 1 - fmin(1, xVelSmooth*xVelSmooth*normGains.velThresh + xAccel*xAccel*normGains.accelThresh);
+		const float xPosWeightVelAcc = 1 - fmin(1, xVelSmooth*xVelSmooth*normGains->velThresh + xAccel*xAccel*normGains->accelThresh);
 		const float xPosWeight1 = fmax(xPosWeightVelAcc, stickDistance6);
 		const float xPosWeight2 = 1-xPosWeight1;
 
-		xPosFilt = xPosWeight1*xPos + xPosWeight2*xLPF;
+		*xPosFilt = xPosWeight1*xPos + xPosWeight2*xLPF;
 	} else {
-		xPosFilt = xPos;
+		*xPosFilt = xPos;
 	}
 
-	if(controls.ySnapback > 0){
-		yVelFilt = velWeight1*yVel + (1-normGains.yVelDecay)*velWeight2*oldYVelFilt + normGains.yVelPosFactor*oldYPosDiff;
+	if(controls->ySnapback > 0){
+		yVelFilt = velWeight1*yVel + (1-normGains->yVelDecay)*velWeight2*oldYVelFilt + normGains->yVelPosFactor*oldYPosDiff;
 
-		const float yPosWeightVelAcc = 1 - fmin(1, yVelSmooth*yVelSmooth*normGains.velThresh + yAccel*yAccel*normGains.accelThresh);
+		const float yPosWeightVelAcc = 1 - fmin(1, yVelSmooth*yVelSmooth*normGains->velThresh + yAccel*yAccel*normGains->accelThresh);
 		const float yPosWeight1 = fmax(yPosWeightVelAcc, stickDistance6);
 		const float yPosWeight2 = 1-yPosWeight1;
 
-		yPosFilt = yPosWeight1*yPos +
-				   yPosWeight2*(oldYPosFilt + (1-normGains.yVelDamp)*yVelFilt);
-	} else if(controls.ySnapback < 0) {
-		const float yLPF = oldYPosFilt*normGains.yVelDamp + yPos*(1-normGains.yVelDamp);
+		*yPosFilt = yPosWeight1*yPos +
+				   yPosWeight2*(oldYPosFilt + (1-normGains->yVelDamp)*yVelFilt);
+	} else if(controls->ySnapback < 0) {
+		const float yLPF = oldYPosFilt*normGains->yVelDamp + yPos*(1-normGains->yVelDamp);
 
-		const float yPosWeightVelAcc = 1 - fmin(1, yVelSmooth*yVelSmooth*normGains.velThresh + yAccel*yAccel*normGains.accelThresh);
+		const float yPosWeightVelAcc = 1 - fmin(1, yVelSmooth*yVelSmooth*normGains->velThresh + yAccel*yAccel*normGains->accelThresh);
 		const float yPosWeight1 = fmax(yPosWeightVelAcc, stickDistance6);
 		const float yPosWeight2 = 1-yPosWeight1;
 
-		yPosFilt = yPosWeight1*yPos + yPosWeight2*yLPF;
+		*yPosFilt = yPosWeight1*yPos + yPosWeight2*yLPF;
 	} else {
-		yPosFilt = yPos;
+		*yPosFilt = yPos;
 	}
 };
 
@@ -221,7 +209,7 @@ float calcWaveshapeMult(const int setting){
 //It's not suitable to be the sole filter, but when put after
 // the smart snapback filter, it should be able to hold the
 // output at the rim longer when released.
-void aRunWaveShaping(const float xPos, const float yPos, float &xOut, float &yOut, const ControlConfig &controls, const FilterGains &normGains){
+void aRunWaveShaping(const float xPos, const float yPos, float *xOut, float *yOut, const ControlConfig_s *controls, const FilterGains_s *normGains){
 	volatile static float oldXPos = 0;
 	volatile static float oldYPos = 0;
 	volatile static float oldXVel = 0;
@@ -245,27 +233,27 @@ void aRunWaveShaping(const float xPos, const float yPos, float &xOut, float &yOu
 	//extreme pode is like 32-80
 	//32 should be the limit
 
-	const float xFactor = calcWaveshapeMult(controls.axWaveshaping);
-	const float yFactor = calcWaveshapeMult(controls.ayWaveshaping);
+	const float xFactor = calcWaveshapeMult(controls->axWaveshaping);
+	const float yFactor = calcWaveshapeMult(controls->ayWaveshaping);
 
-	const float oldXPosWeight = fmin(1, xVelSmooth*xVelSmooth*normGains.velThresh*xFactor);
+	const float oldXPosWeight = fmin(1, xVelSmooth*xVelSmooth*normGains->velThresh*xFactor);
 	const float newXPosWeight = 1 - oldXPosWeight;
-	const float oldYPosWeight = fmin(1, yVelSmooth*yVelSmooth*normGains.velThresh*yFactor);
+	const float oldYPosWeight = fmin(1, yVelSmooth*yVelSmooth*normGains->velThresh*yFactor);
 	const float newYPosWeight = 1 - oldYPosWeight;
 
-	xOut = oldXOut*oldXPosWeight + xPos*newXPosWeight;
-	yOut = oldYOut*oldYPosWeight + yPos*newYPosWeight;
+	*xOut = oldXOut*oldXPosWeight + xPos*newXPosWeight;
+	*yOut = oldYOut*oldYPosWeight + yPos*newYPosWeight;
 
 	oldXPos = xPos;
 	oldYPos = yPos;
 	oldXVel = xVel;
 	oldYVel = yVel;
 
-	oldXOut = xOut;
-	oldYOut = yOut;
+	oldXOut = *xOut;
+	oldYOut = *yOut;
 }
 //We need to duplicate this and call each one only once so that we don't reuse the history and screw things up.
-void cRunWaveShaping(const float xPos, const float yPos, float &xOut, float &yOut, const ControlConfig &controls, const FilterGains &normGains){
+void cRunWaveShaping(const float xPos, const float yPos, float *xOut, float *yOut, const ControlConfig_s *controls, const FilterGains_s *normGains){
 	volatile static float oldXPos = 0;
 	volatile static float oldYPos = 0;
 	volatile static float oldXVel = 0;
@@ -289,24 +277,22 @@ void cRunWaveShaping(const float xPos, const float yPos, float &xOut, float &yOu
 	//extreme pode is like 32-80
 	//32 should be the limit
 
-	const float xFactor = calcWaveshapeMult(controls.cxWaveshaping);
-	const float yFactor = calcWaveshapeMult(controls.cyWaveshaping);
+	const float xFactor = calcWaveshapeMult(controls->cxWaveshaping);
+	const float yFactor = calcWaveshapeMult(controls->cyWaveshaping);
 
-	const float oldXPosWeight = fmin(1, xVelSmooth*xVelSmooth*normGains.velThresh*xFactor);
+	const float oldXPosWeight = fmin(1, xVelSmooth*xVelSmooth*normGains->velThresh*xFactor);
 	const float newXPosWeight = 1 - oldXPosWeight;
-	const float oldYPosWeight = fmin(1, yVelSmooth*yVelSmooth*normGains.velThresh*yFactor);
+	const float oldYPosWeight = fmin(1, yVelSmooth*yVelSmooth*normGains->velThresh*yFactor);
 	const float newYPosWeight = 1 - oldYPosWeight;
 
-	xOut = oldXOut*oldXPosWeight + xPos*newXPosWeight;
-	yOut = oldYOut*oldYPosWeight + yPos*newYPosWeight;
+	*xOut = oldXOut*oldXPosWeight + xPos*newXPosWeight;
+	*yOut = oldYOut*oldYPosWeight + yPos*newYPosWeight;
 
 	oldXPos = xPos;
 	oldYPos = yPos;
 	oldXVel = xVel;
 	oldYVel = yVel;
 
-	oldXOut = xOut;
-	oldYOut = yOut;
+	oldXOut = *xOut;
+	oldYOut = *yOut;
 }
-
-#endif //FILTER_H

@@ -1,14 +1,34 @@
-
-#include "hardware/flash.h"
+#include "phob_includes.h"
 
 #define FLASH_TARGET_OFFSET (1536 * 1024)
 
-void _phob_init_api()
+bool _hw_phob_set_api_mode(PhobAPIMode_t mode)
 {
+  switch(mode)
+  {
+    default:
+      return false;
+      break;
+
+    case PHOB_API_MODE_GCC:
+      return true;
+      break;
+
+    case PHOB_API_MODE_XINPUT:
+      return true;
+      break;
+  }
+}
+
+void _hw_phob_init_api()
+{
+
+
+
 }
 
 // LL Load settings
-void _phob_load_settings(Settings_s *settings_out, uint8_t index)
+void _hw_phob_load_settings(Settings_s *settings_out, uint8_t index)
 {
   // Avoid zero IDX.
   index += 1;
@@ -18,7 +38,7 @@ void _phob_load_settings(Settings_s *settings_out, uint8_t index)
   memcpy(settings_out, target_read, sizeof(Settings_s));
 }
 
-void _phob_save_settings(Settings_s *settings_in, uint8_t index, const bool noLock = false)
+void _hw_phob_save_settings(Settings_s *settings_in, uint8_t index, const bool noLock = false)
 {
 
   // Lock core
@@ -60,7 +80,7 @@ void _phob_save_settings(Settings_s *settings_in, uint8_t index, const bool noLo
   }
 }
 
-void _phob_rumble(bool rumble, uint8_t intensity)
+void _hw_phob_rumble(bool rumble, uint8_t intensity)
 {
 
 }

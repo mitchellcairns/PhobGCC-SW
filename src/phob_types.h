@@ -5,6 +5,13 @@
 
 typedef enum
 {
+	PHOB_API_MODE_UNSET,
+	PHOB_API_MODE_GCC,
+	PHOB_API_MODE_XINPUT,
+} PhobAPIMode_t;
+
+typedef enum
+{
   DEFAULTJUMP,
   SWAP_XZ,
   SWAP_YZ,

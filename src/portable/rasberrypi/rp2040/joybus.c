@@ -50,10 +50,7 @@ void __time_critical_func(convertToPio)(const uint8_t* command, const int len, u
     result[len / 2] += 3 << (2 * (8 * (len % 2)));
 }
 
-void __time_critical_func(enterMode)(const int dataPin,
-                                     const int rumblePin,
-                                     const int brakePin,
-                                     uint16_t rumblePower) {
+void __time_critical_func(enterMode)(const int dataPin) {
     gpio_init(dataPin);
     gpio_set_dir(dataPin, GPIO_IN);
     gpio_pull_up(dataPin);
@@ -74,6 +71,9 @@ void __time_critical_func(enterMode)(const int dataPin,
 
     pio_sm_init(pio, 0, offset, &config);
     pio_sm_set_enabled(pio, 0, true);
+
+    // Disable rumble just incase
+    phob_rumble(false);
 
     while (true) {
         uint8_t buffer[3];
@@ -136,11 +136,11 @@ void __time_critical_func(enterMode)(const int dataPin,
 			// Rumble
 
             if(buffer[0] & 1) {
-                phob_rumble(true, rumblePower);
+                cb_phob_rumble(true);
                 //pwm_set_gpio_level(brakePin, 0);
                 //pwm_set_gpio_level(rumblePin, rumblePower);
             } else {
-                phob_rumble(false, rumblePower);
+                cb_phob_rumble(false);
                 //pwm_set_gpio_level(rumblePin, 0);
                 //pwm_set_gpio_level(brakePin, 255);
             }
