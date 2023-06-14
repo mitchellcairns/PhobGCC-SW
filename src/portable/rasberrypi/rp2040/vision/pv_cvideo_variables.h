@@ -2,6 +2,7 @@
 #define CVIDEO_VARS_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 //ONLY INCLUDE THIS IN CPP FILES, NOT HEADER FILES
 

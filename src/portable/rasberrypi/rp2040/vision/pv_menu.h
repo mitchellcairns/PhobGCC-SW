@@ -1,7 +1,9 @@
 #ifndef MENU_H
 #define MENU_H
 
-enum ScreenNumber
+#include <stdint.h>
+
+typedef enum
 {									// mark finished ones with asterisks
 	MENU_SPLASH,		// 0		|0
 	MENU_MAIN,			// 1		| 1
@@ -41,14 +43,14 @@ enum ScreenNumber
 	MENU_SNEK,			// 35	|   3
 	MENU_PING,			// 36	|   3
 	MENU_VISION			// 37	|  2		adjust offset for phobvision
-};
+} ScreenNumber_t;
 
 // The menu index consists of:
 // 1. Parent index
 // 2. Number of child indices: 255 = leaf node, 0 = one child node but not visible
 // 3. List of child indices (up to 6)
 
-const uint8_t MenuIndex[38][8] = {
+extern const uint8_t MenuIndex[38][8] = {
 		//   PARENT			COUNT	NEXT1			NEXT2			NEXT3			NEXT4			NEXT5			NEXT6
 		{255, 0, MENU_MAIN, 255, 255, 255, 255, 255},																																	 // splashscreen
 		{MENU_SPLASH, 5, MENU_STICK, MENU_SETTINGS, MENU_SCOPE, MENU_GAMES, MENU_VISION, 255},												 // main menu
@@ -93,7 +95,7 @@ const uint8_t MenuIndex[38][8] = {
 // The names consists of an array of null terminated c strings. Pad with spaces.
 // This is the heading of the menus and also the submenu entries.
 
-const char MenuNames[38][28] = {
+extern const char MenuNames[38][28] = {
 		"PhobVision                 ",
 		"Main Menu                  ",
 		"Stick Configuration        ",

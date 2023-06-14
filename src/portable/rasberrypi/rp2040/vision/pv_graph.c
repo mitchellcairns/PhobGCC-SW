@@ -1,8 +1,7 @@
-#include <algorithm>
 #include "cvideo.h"
 
-using std::min;
-using std::max;
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 //Graphing routines go here
 
@@ -15,14 +14,14 @@ void graphStickmap(unsigned char bitmap[],
 		const int y[],
 		const uint16_t length,
 		const uint8_t color,
-		const LineOrPoint graphType) {
+		const LineOrPoint_t graphType) {
 	if((VWIDTH <= x0 + 256) || (VHEIGHT <= y0 + 256)) {
 		return;
 	}
 	if(graphType == POINTGRAPH) {
 		for(int point = 0; point < length; point++) {
-			const int tempX = min(127, max(-127,  x[point])) + 127 + x0;
-			const int tempY = min(127, max(-127, -y[point])) + 127 + y0;
+			const int tempX = MIN(127, MAX(-127,  x[point])) + 127 + x0;
+			const int tempY = MIN(127, MAX(-127, -y[point])) + 127 + y0;
 
 			const unsigned int rowOffset = tempY*VWIDTH/2;
 			if(tempX % 2) { //odd
@@ -35,11 +34,11 @@ void graphStickmap(unsigned char bitmap[],
 		if(length <= 1) {
 			return;
 		}
-		int oldX = min(127, max(-127,  x[0]+127)) + x0;
-		int oldY = min(127, max(-127, -y[0]+127)) + y0;
+		int oldX = MIN(127, MAX(-127,  x[0]+127)) + x0;
+		int oldY = MIN(127, MAX(-127, -y[0]+127)) + y0;
 		for(int point = 1; point < length; point++) {
-			const int tempX = min(127, max(-127,  x[point])) + 127 + x0;
-			const int tempY = min(127, max(-127, -y[point])) + 127 + y0;
+			const int tempX = MIN(127, MAX(-127,  x[point])) + 127 + x0;
+			const int tempY = MIN(127, MAX(-127, -y[point])) + 127 + y0;
 
 			drawLine(bitmap, oldX, oldY, tempX, tempY, color);
 

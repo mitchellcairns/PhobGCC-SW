@@ -1,42 +1,47 @@
 #ifndef CVIDEO_H
 #define CVIDEO_H
 
-#include "structsAndEnums.h"
+#include "pv_includes.h"
 
 #ifndef VWIDTH
 #define VWIDTH 512
 #endif
+
 #ifndef VWIDTHBYTE
 #define VWIDTHBYTE 256
 #endif
+
 #ifndef VHEIGHT
 #define VHEIGHT 384
 #endif
+
 #ifndef BUFFERLEN
 #define BUFFERLEN 98304 // 512*384/2
 #endif
 
-enum LineOrPoint
+typedef enum
 {
   LINEGRAPH,
   POINTGRAPH
-};
+} LineOrPoint_t;
 
 int videoOut(const uint8_t pin_base,
-             Buttons &btn,
-             Buttons &hardware,
-             RawStick &raw,
-             ControlConfig &config,
-             StickParams &aStick,
-             StickParams &cStick,
-             DataCapture &capture,
-             volatile bool &extSync,
-             volatile uint8_t &pleaseCommit,
-             int &currentCalStep,
+             Buttons_u *btn,
+             Buttons_u *hardware,
+             RawStick_s *raw,
+             ControlConfig_s *config,
+             StickParams_s *aStick,
+             StickParams_s *cStick,
+             DataCapture_s *capture,
+             volatile bool *extSync,
+             volatile uint8_t *pleaseCommit,
+             int *currentCalStep,
              const int version);
 
 uint16_t getImageWidth(const unsigned char image[]);
+
 uint16_t getImageHeight(const unsigned char image[]);
+
 void drawImage(unsigned char bitmap[],
                const unsigned char image[],
                const unsigned char index[],
@@ -44,25 +49,25 @@ void drawImage(unsigned char bitmap[],
                const uint16_t y);
 
 void drawLine(unsigned char bitmap[],
-              const uint16_t xStart,
-              const uint16_t yStart,
-              const uint16_t xEnd,
-              const uint16_t yEnd,
+              const uint16_t x0,
+              const uint16_t y0,
+              const uint16_t x1,
+              const uint16_t y1,
               const uint8_t color);
 
 void drawString(unsigned char bitmap[],
                 const uint16_t x,
                 const uint16_t y,
                 const uint8_t color,
-                const char string[],
-                const uint8_t charLimit = 99);
+                const char string[]
+                /*const uint8_t charLimit*/);
 
 void drawString2x(unsigned char bitmap[],
                   const uint16_t x,
                   const uint16_t y,
                   const uint8_t color,
-                  const char string[],
-                  const uint8_t charLimit = 99);
+                  const char string[]
+                  /*const uint8_t charLimit*/);
 
 void graphStickmap(unsigned char bitmap[],
                    const uint16_t x0,
@@ -71,7 +76,7 @@ void graphStickmap(unsigned char bitmap[],
                    const int y[],
                    const uint16_t length,
                    const uint8_t color,
-                   const LineOrPoint graphType);
+                   const LineOrPoint_t graphType);
 
 // drawFloat and drawInt draw numbers to the screen
 // they handle negative numbers so that they don't misalign
@@ -92,6 +97,7 @@ void drawFloat(unsigned char bitmap[],
                const uint8_t largestPower,
                const uint8_t totalChars,
                const float number);
+
 void drawFloat2x(unsigned char bitmap[],
                  const uint16_t x0,
                  const uint16_t y0,
@@ -99,12 +105,14 @@ void drawFloat2x(unsigned char bitmap[],
                  const uint8_t largestPower,
                  const uint8_t totalChars,
                  const float number);
+
 void drawInt(unsigned char bitmap[],
              const uint16_t x0,
              const uint16_t y0,
              const uint8_t color,
              const uint8_t largestPower,
              const int number);
+
 void drawInt2x(unsigned char bitmap[],
                const uint16_t x0,
                const uint16_t y0,
@@ -117,12 +125,12 @@ void drawMenuFast(unsigned char bitmap[],
                   const int itemIndex,
                   const bool changeMade,
                   const int currentCalStep,
-                  const Buttons btn,
-                  const Buttons hardware,
-                  const RawStick raw,
-                  const ControlConfig &controls,
-                  const StickParams &aStick,
-                  const StickParams &cStick);
+                  const Buttons_u *btn,
+                  const Buttons_u *hardware,
+                  const RawStick_s *raw,
+                  const ControlConfig_s *controls,
+                  const StickParams_s *aStick,
+                  const StickParams_s *cStick);
 
 void drawMenu(unsigned char bitmap[],
               const unsigned int menu,
@@ -130,24 +138,24 @@ void drawMenu(unsigned char bitmap[],
               const bool changeMade,
               const int currentCalStep,
               const int version,
-              const Buttons btn,
-              const RawStick raw,
-              const ControlConfig &controls,
-              const StickParams &aStick,
-              const StickParams &cStick,
-              DataCapture &capture);
+              const Buttons_u *btn,
+              const RawStick_s *raw,
+              const ControlConfig_s *controls,
+              const StickParams_s *aStick,
+              const StickParams_s *cStick,
+              DataCapture_s *capture);
 
 void handleMenuButtons(unsigned char bitmap[],
-                       unsigned int &menu,
-                       int &itemIndex,
-                       uint8_t &redraw,
-                       bool &changeMade,
+                       unsigned int *menu,
+                       int *itemIndex,
+                       uint8_t *redraw,
+                       bool *changeMade,
                        const int currentCalStep,
-                       volatile uint8_t &pleaseCommit, // for asking the other core to commit settings
-                       const Buttons &btn,
-                       const Buttons &hardware,
-                       ControlConfig &controls,
-                       DataCapture &capture);
+                       volatile uint8_t *pleaseCommit, // for asking the other core to commit settings
+                       const Buttons_u *btn,
+                       const Buttons_u *hardware,
+                       ControlConfig_s *controls,
+                       DataCapture_s *capture);
 
 void eraseCharLine(unsigned char bitmap[],
                    uint16_t y0);
