@@ -13,17 +13,17 @@ inline void debug_print(char c) {
   //print(c);
 #endif
 }
-inline void debug_print(int i, int x = 0) {
+inline void debug_print(int i, int x) {
 #if (DEBUG_ENABLED)
   //print(i, x);
 #endif
 }
-inline void debug_print(long l, int x = 0) {
+inline void debug_print(long l, int x) {
 #if (DEBUG_ENABLED)
   //print(l, x);
 #endif
 }
-inline void debug_print(double d, int x = 0) {
+inline void debug_print(double d, int x) {
 #if (DEBUG_ENABLED)
   //print(d, x);
 #endif
@@ -39,17 +39,17 @@ inline void debug_println(char c) {
   //println(c);
 #endif
 }
-inline void debug_println(int i, int x = 0) {
+inline void debug_println(int i, int x) {
 #if (DEBUG_ENABLED)
   //println(i, x);
 #endif
 }
-inline void debug_println(long l, int x = 0) {
+inline void debug_println(long l, int x) {
 #if (DEBUG_ENABLED)
   //println(l, x);
 #endif
 }
-inline void debug_println(double d, int x = 0) {
+inline void debug_println(double d, int x) {
 #if (DEBUG_ENABLED)
   //println(d, x);
 #endif

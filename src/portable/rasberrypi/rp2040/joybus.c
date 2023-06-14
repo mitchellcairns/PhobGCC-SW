@@ -1,10 +1,4 @@
-#include "comms/joybus.hpp"
-
-#include "hardware/gpio.h"
-#include "hardware/pwm.h"
-
-#include "hardware/pio.h"
-#include "joybus.pio.h"
+#include "joybus.h"
 
 #define ORG 127
 
@@ -32,18 +26,18 @@
    I advise checking the RP2040 documentation and this video https://www.youtube.com/watch?v=yYnQYF_Xa8g&ab_channel=stacksmashing to understand
 */
 
-void __time_critical_func(convertToPio)(const uint8_t* command, const int len, uint32_t* result, int& resultLen) {
+void __time_critical_func(convertToPio)(const uint8_t* command, const int len, uint32_t* result, int *resultLen) {
     // PIO Shifts to the right by default
     // In: pushes batches of 8 shifted left, i.e we get [0x40, 0x03, rumble (the end bit is never pushed)]
     // Out: We push commands for a right shift with an enable pin, ie 5 (101) would be 0b11'10'11
     // So in doesn't need post processing but out does
     if (len == 0) {
-        resultLen = 0;
+        *resultLen = 0;
         return;
     }
-    resultLen = len/2 + 1;
+    *resultLen = len/2 + 1;
     int i;
-    for (i = 0; i < resultLen; i++) {
+    for (i = 0; i < *resultLen; i++) {
         result[i] = 0;
     }
     for (i = 0; i < len; i++) {
@@ -59,8 +53,7 @@ void __time_critical_func(convertToPio)(const uint8_t* command, const int len, u
 void __time_critical_func(enterMode)(const int dataPin,
                                      const int rumblePin,
                                      const int brakePin,
-                                     int &rumblePower,
-                                     std::function<GCReport()> func) {
+                                     uint16_t rumblePower) {
     gpio_init(dataPin);
     gpio_set_dir(dataPin, GPIO_IN);
     gpio_pull_up(dataPin);
@@ -78,10 +71,10 @@ void __time_critical_func(enterMode)(const int dataPin,
     sm_config_set_clkdiv(&config, 5);
     sm_config_set_out_shift(&config, true, false, 32);
     sm_config_set_in_shift(&config, false, true, 8);
-    
+
     pio_sm_init(pio, 0, offset, &config);
     pio_sm_set_enabled(pio, 0, true);
-    
+
     while (true) {
         uint8_t buffer[3];
         buffer[0] = pio_sm_get_blocking(pio, 0);
@@ -115,17 +108,18 @@ void __time_critical_func(enterMode)(const int dataPin,
             for (int i = 0; i<resultLen; i++) pio_sm_put_blocking(pio, 0, result[i]);
         }
         else if (buffer[0] == 0x40) { // Could check values past the first byte for reliability
+
             //The call to the state building function happens here, because on digital controllers, it's near instant, so it can be done between the poll and the response
             // It must be very fast (few us max) to be done between poll and response and still be compatible with adapters
             // Consider whether that makes sense for your project. If your state building is long, use a different control flow i.e precompute somehow and have func read it
-            GCReport gcReport = func();
+            //GCReport_s gcReport = func();
 
 			//get the second byte; we do this interleaved with work that must be done
             buffer[0] = pio_sm_get_blocking(pio, 0);
 
             uint32_t result[5];
             int resultLen;
-            convertToPio((uint8_t*)(&gcReport), 8, result, resultLen);
+            convertToPio((uint8_t*)(&_btn), 8, result, resultLen);
 
 			//get the third byte; we do this interleaved with work that must be done
             buffer[0] = pio_sm_get_blocking(pio, 0);
@@ -139,13 +133,16 @@ void __time_critical_func(enterMode)(const int dataPin,
 
             for (int i = 0; i<resultLen; i++) pio_sm_put_blocking(pio, 0, result[i]);
 
-			//Rumble
+			// Rumble
+
             if(buffer[0] & 1) {
-                pwm_set_gpio_level(brakePin, 0);
-                pwm_set_gpio_level(rumblePin, rumblePower);
+                phob_rumble(true, rumblePower);
+                //pwm_set_gpio_level(brakePin, 0);
+                //pwm_set_gpio_level(rumblePin, rumblePower);
             } else {
-                pwm_set_gpio_level(rumblePin, 0);
-                pwm_set_gpio_level(brakePin, 255);
+                phob_rumble(false, rumblePower);
+                //pwm_set_gpio_level(rumblePin, 0);
+                //pwm_set_gpio_level(brakePin, 255);
             }
 
         }
@@ -158,4 +155,3 @@ void __time_critical_func(enterMode)(const int dataPin,
         }
     }
 }
-

@@ -14,6 +14,8 @@
 #define CURVE_FIT_DEBUG 0
 #endif
 
+#include <stdint.h>
+
 /* Enum for error messages */
 typedef enum {
 	ORDER_AND_NCOEFFS_DO_NOT_MATCH = -1,
