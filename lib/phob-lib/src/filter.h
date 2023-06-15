@@ -1,6 +1,11 @@
 #ifndef FILTER_H
 #define FILTER_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "phob_includes.h"
 
 //The median filter can be either length 3, 4, or 5.
@@ -17,5 +22,9 @@ void runKalman(float *xPosFilt, float *yPosFilt, const float xZ,const float yZ, 
 float calcWaveshapeMult(const int setting);
 void aRunWaveShaping(const float xPos, const float yPos, float *xOut, float *yOut, const ControlConfig_s *controls, const FilterGains_s *normGains);
 void cRunWaveShaping(const float xPos, const float yPos, float *xOut, float *yOut, const ControlConfig_s *controls, const FilterGains_s *normGains);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -8,6 +8,11 @@
 #ifndef CURVEFITTING_H
 #define CURVEFITTING_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define MAX_ORDER 20
 
 #ifndef CURVE_FIT_DEBUG
@@ -26,9 +31,14 @@ typedef enum {
 void cpyArray(double *src, double*dest, int n);
 void subCol(double *mat, double* sub, uint8_t coln, uint8_t n);
 int trianglize(double **m, int n);
-double det(double *in, int n, uint8_t /*prnt*/);
+double det(double *in, int n, uint8_t prnt);
 double curveFitPower(double base, int exponent);
 int fitCurve_single (int order, int nPoints, double py[], int nCoeffs, double *coeffs);
 int fitCurve (int order, int nPoints, double px[], double py[], int nCoeffs, double *coeffs);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

@@ -1,5 +1,10 @@
-#ifndef __JOYBUS_H
-#define __JOYBUS_H
+#ifndef JOYBUS_H
+#define JOYBUS_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include "phob_includes.h"
 
@@ -10,5 +15,9 @@
  * @param func Function to be called to obtain the GCReport to be sent to the console
  */
 void enterMode(const int dataPin);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

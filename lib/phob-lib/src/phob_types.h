@@ -1,6 +1,11 @@
 #ifndef PHOB_TYPES_H
 #define PHOB_TYPES_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "stdint.h"
 
 typedef enum
@@ -401,5 +406,9 @@ typedef struct {
     uint8_t analogL;
     uint8_t analogR;
 } __attribute__((packed)) GCReport_s;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

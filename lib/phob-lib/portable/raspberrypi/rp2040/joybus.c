@@ -73,7 +73,7 @@ void __time_critical_func(enterMode)(const int dataPin) {
     pio_sm_set_enabled(pio, 0, true);
 
     // Disable rumble just incase
-    phob_rumble(false);
+    cb_phob_rumble(false);
 
     while (true) {
         uint8_t buffer[3];
@@ -83,7 +83,7 @@ void __time_critical_func(enterMode)(const int dataPin) {
             uint8_t probeResponse[3] = { 0x09, 0x00, 0x03 };
             uint32_t result[2];
             int resultLen;
-            convertToPio(probeResponse, 3, result, resultLen);
+            convertToPio(probeResponse, 3, result, &resultLen);
             sleep_us(6); // 3.75us into the bit before end bit => 6.25 to wait if the end-bit is 5us long
 
             pio_sm_set_enabled(pio, 0, false);
@@ -98,7 +98,7 @@ void __time_critical_func(enterMode)(const int dataPin) {
             // TODO The origin response sends centered values in this code excerpt. Consider whether that makes sense for your project (digital controllers -> yes)
             uint32_t result[6];
             int resultLen;
-            convertToPio(originResponse, 10, result, resultLen);
+            convertToPio(originResponse, 10, result, &resultLen);
             // Here we don't wait because convertToPio takes time
 
             pio_sm_set_enabled(pio, 0, false);
@@ -119,7 +119,7 @@ void __time_critical_func(enterMode)(const int dataPin) {
 
             uint32_t result[5];
             int resultLen;
-            convertToPio((uint8_t*)(&_btn), 8, result, resultLen);
+            convertToPio((uint8_t*)(&_btn), 8, result, &resultLen);
 
 			//get the third byte; we do this interleaved with work that must be done
             buffer[0] = pio_sm_get_blocking(pio, 0);

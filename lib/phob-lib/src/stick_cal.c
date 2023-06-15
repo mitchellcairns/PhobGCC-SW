@@ -1,10 +1,4 @@
-
-
-#include <math.h>
-#include <stdbool.h>
-#include "curveFitting.h"
 #include "stick_cal.h"
-#include "filter.h"
 
 //TODO: either put these const globals in varables.h or make them #defines
 //origin values, useful for writing readable stick positions
@@ -18,7 +12,7 @@ const int _noOfAdjNotches = 12;
 const int _fitOrder = 3; //fit order used in the linearization step
 const float _maxStickAngle = 0.4886921906;//28 degrees; this is the max angular deflection of the stick.
 
-const float _defaultCalPointsX[_noOfCalibrationPoints] =  {
+float _defaultCalPointsX[] =  {
 	0.3010610568,0.3603937084,//right
 	0.3010903951,0.3000194135,
 	0.3005567843,0.3471911134,//up right
@@ -35,7 +29,8 @@ const float _defaultCalPointsX[_noOfCalibrationPoints] =  {
 	0.3002766984,0.3012828579,
 	0.3014959877,0.346512936,//down right
 	0.3013398149,0.3007809916};
-const float _defaultCalPointsY[_noOfCalibrationPoints] =  {
+
+float _defaultCalPointsY[] =  {
 	0.300092277, 0.3003803475,//right
 	0.3002205792,0.301004752,
 	0.3001241394,0.3464200104,//up right
@@ -57,11 +52,11 @@ const float _defaultCalPointsY[_noOfCalibrationPoints] =  {
 //Defaults
 //                                                         right        notch 1      up right     notch 2      up           notch 3      up left      notch 4      left         notch 5      down left    notch 6      down         notch 7      down right   notch 8
 //                                                         0            1            2            3            4            5            6            7            8            9            10           11           12           13           14           15
-const int _calOrder[_noOfCalibrationPoints] =             {0, 1,        8, 9,       16, 17,       24, 25,      4, 5,        12, 13,      20, 21,      28, 29,      2, 3,        6, 7,        10, 11,      14, 15,      18, 19,      22, 23,      26, 27,      30, 31};
-const float _notchAngleDefaults[_noOfNotches] =           {0,           M_PI/8.0,    M_PI*2/8.0,  M_PI*3/8.0,  M_PI*4/8.0,  M_PI*5/8.0,  M_PI*6/8.0,  M_PI*7/8.0,  M_PI*8/8.0,  M_PI*9/8.0,  M_PI*10/8.0, M_PI*11/8.0, M_PI*12/8.0, M_PI*13/8.0, M_PI*14/8.0, M_PI*15/8.0};
-const NotchStatus_t _notchStatusDefaults[_noOfNotches] =    {CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE};
+int _calOrder[] =             {0, 1,        8, 9,       16, 17,       24, 25,      4, 5,        12, 13,      20, 21,      28, 29,      2, 3,        6, 7,        10, 11,      14, 15,      18, 19,      22, 23,      26, 27,      30, 31};
+float _notchAngleDefaults[] =           {0,           M_PI/8.0,    M_PI*2/8.0,  M_PI*3/8.0,  M_PI*4/8.0,  M_PI*5/8.0,  M_PI*6/8.0,  M_PI*7/8.0,  M_PI*8/8.0,  M_PI*9/8.0,  M_PI*10/8.0, M_PI*11/8.0, M_PI*12/8.0, M_PI*13/8.0, M_PI*14/8.0, M_PI*15/8.0};
+NotchStatus_t _notchStatusDefaults[] =    {CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE, CARDINAL,    TERT_ACTIVE, SECONDARY,   TERT_ACTIVE};
 //                                                         up right     up left      down left    down right   notch 1      notch 2      notch 3      notch 4      notch 5      notch 6      notch 7      notch 8
-const int _notchAdjOrder[_noOfAdjNotches] =               {2,           6,           10,          14,          1,           3,           5,           7,           9,           11,          13,          15};
+int _notchAdjOrder[] =               {2,           6,           10,          14,          1,           3,           5,           7,           9,           11,          13,          15};
 
 float linearize(const float point, const float coefficients[]){
 	return (coefficients[0]*(point*point*point) + coefficients[1]*(point*point) + coefficients[2]*point + coefficients[3]);
@@ -85,8 +80,8 @@ void angleOnSphere(const float x, const float y, float *angle){
 	float xx = sinf(x*_maxStickAngle/100) * cosf(y*_maxStickAngle/100);
 	float yy = cosf(x*_maxStickAngle/100) * sinf(y*_maxStickAngle/100);
 	*angle = atan2f(yy, xx);//WHY IS THIS BACKWARDS
-	if(angle < 0){
-		angle += 2*M_PI;
+	if(*angle < 0){
+		*angle += 2*M_PI;
 	}
 };
 
@@ -136,7 +131,7 @@ void cleanNotches(float notchAngles[], float measuredNotchAngles[], NotchStatus_
 	notchRemap
 	Remaps the stick position using affine transforms generated from the notch positions
 *******************/
-void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, const int regions, const StickParams_s *stickParams, int currentCalStep, const ControlConfig *controls, const WhichStick whichStick){
+void notchRemap(const float xIn, const float yIn, float* xOut, float* yOut, const int regions, const StickParams_s *stickParams, int currentCalStep, const ControlConfig_s *controls, const WhichStick_t whichStick){
 	//determine the angle between the x unit vector and the current position vector
 	float angle = atan2f(yIn,xIn);
 
@@ -692,7 +687,7 @@ void print_mtx(const float matrix[3][3]){
 };
 
 
-void notchCalibrate(const float xIn[], const float yIn[], const float xOut[], const float yOut[], const int regions, StickParams *stickParams){
+void notchCalibrate(const float xIn[], const float yIn[], const float xOut[], const float yOut[], const int regions, StickParams_s *stickParams){
 	for(int i = 1; i <= regions; i++){
 		debug_print("calibrating region: ");
 		debug_println(i);

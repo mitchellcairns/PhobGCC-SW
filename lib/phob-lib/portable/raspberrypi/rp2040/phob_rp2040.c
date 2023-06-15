@@ -33,12 +33,12 @@ void _hw_phob_load_settings(Settings_s *settings_out, uint8_t index)
   // Avoid zero IDX.
   index += 1;
 
-  static_assert(sizeof(Settings_s) <= FLASH_SECTOR_SIZE)
+  static_assert(sizeof(Settings_s) <= FLASH_SECTOR_SIZE);
       const uint8_t *target_read = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET + (index * FLASH_SECTOR_SIZE));
   memcpy(settings_out, target_read, sizeof(Settings_s));
 }
 
-void _hw_phob_save_settings(Settings_s *settings_in, uint8_t index, const bool noLock = false)
+void _hw_phob_save_settings(Settings_s *settings_in, uint8_t index, const bool noLock)
 {
 
   // Lock core

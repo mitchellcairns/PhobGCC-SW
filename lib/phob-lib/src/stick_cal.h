@@ -1,7 +1,12 @@
 #ifndef STICKCAL_H
 #define STICKCAL_H
 
-#include "phob_types.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#include "phob_includes.h"
 
 float linearize(const float point, const float coefficients[]);
 void calcStickValues(float angle, float* x, float* y);
@@ -22,5 +27,9 @@ void inverse(const float in[3][3], float out[3][3]);
 void matrixMatrixMult(const float left[3][3], const float right[3][3], float output[3][3]);
 void print_mtx(const float matrix[3][3]);
 void notchCalibrate(const float xIn[], const float yIn[], const float xOut[], const float yOut[], const int regions, StickParams_s *stickParams);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

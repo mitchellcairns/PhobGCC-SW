@@ -1,0 +1,14 @@
+pkg.name: phob-lib
+pkg.description: A library for the Phob project to emulate native GameCube controllers.
+pkg.author: "Phob Dev Team <thach@tinyusb.org>"
+pkg.homepage: "https://github.com/PhobGCC/phob-lib"
+pkg.keywords:
+    - gamecube
+
+pkg.type: sdk
+
+#pkg.deps:
+    #- "@apache-mynewt-core/kernel/os"
+
+pkg.include_dirs:
+    - src

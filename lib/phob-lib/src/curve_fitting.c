@@ -5,8 +5,7 @@
   Created by Rowan Easter-Robinson, August 23, 2018.
   Released into the public domain.
 */
-#include <stdint.h>
-#include "curveFitting.h"
+#include "curve_fitting.h"
 
 void cpyArray(double *src, double*dest, int n){
   for (int i = 0; i < n*n; i++){
@@ -46,7 +45,7 @@ int trianglize(double **m, int n)
   return sign;
 }
 
-double det(double *in, int n, uint8_t /*prnt*/)
+double det(double *in, int n, uint8_t prnt)
 {
   double *m[n];
   m[0] = in;
