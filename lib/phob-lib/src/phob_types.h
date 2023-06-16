@@ -13,6 +13,7 @@ typedef enum
 	PHOB_API_MODE_UNSET,
 	PHOB_API_MODE_GCC,
 	PHOB_API_MODE_XINPUT,
+	PHOB_API_MODE_MAX,
 } PhobAPIMode_t;
 
 typedef enum
@@ -23,7 +24,8 @@ typedef enum
   SWAP_XL,
   SWAP_YL,
   SWAP_XR,
-  SWAP_YR
+  SWAP_YR,
+	JUMP_CONFIG_MAX,
 } JumpConfig_t;
 
 typedef enum
@@ -95,43 +97,72 @@ typedef struct
 // Configuration Struct
 typedef struct
 {
-  JumpConfig_t jump;
-  int l;
-  int r;
-  int lOffset;
-  int rOffset;
-  int cxOffset;
-  int cyOffset;
-  int xSnapback;
-  int ySnapback;
-  int xSmoothing;
-  int ySmoothing;
-  int cxSmoothing;
-  int cySmoothing;
-  int rumble;
-  int autoInit;
-  int axWaveshaping;
-  int ayWaveshaping;
-  int cxWaveshaping;
-  int cyWaveshaping;
+  JumpConfig_t 	jumpConfig;
+  int 	lConfig;
+  int 	rConfig;
+  int 	lTriggerOffset;
+  int 	rTriggerOffset;
+
+  int 	cxOffset;
+  int 	cyOffset;
+
+  int 	xSnapback; 	// 0 disables the filter entirely, 4 is default
+  int 	ySnapback;
+  int 	axSmoothing;
+  int 	aySmoothing;
+
+  int 	cxSmoothing;
+  int 	cySmoothing;
+
+  int 	rumble; 		// 0 is off, nonzero is on, higher is stronger
+
+  int 	autoInit;
+
+  int 	axWaveshaping;
+  int 	ayWaveshaping;
+
+  int 	cxWaveshaping;
+  int 	cyWaveshaping;
+
   float axPoints[32];
   float ayPoints[32];
+
   float cxPoints[32];
   float cyPoints[32];
   float aAngles[16];
   float cAngles[16];
+
   IntOrFloat_u uExtras[4];
   IntOrFloat_u dExtras[4];
   IntOrFloat_u lExtras[4];
   IntOrFloat_u rExtras[4];
+
   int schema;
+
   int AstickCardinalSnapping;
   int CstickCardinalSnapping;
-  int AstickAnalogScaler;
-  int CstickAnalogScaler;
+
+  int 	AstickAnalogScaler;
+  int 	CstickAnalogScaler;
+
   int interlaceOffset;
+
   int tournamentToggle;
 } __attribute__((packed)) Settings_s;
+
+typedef struct
+{
+	float xPoints[32];
+	float yPoints[32];
+	float nxPoints[16];
+	float nyPoints[16];
+} CalPoints_s;
+
+typedef struct
+{
+	float x;
+	float y;
+} AnalogPairFloat_s;
 
 typedef struct{
 	int pinLa;
@@ -226,80 +257,6 @@ typedef struct {
 	uint8_t u : 1;
 	uint8_t d : 1;
 } Cardinals_s;
-
-typedef struct {
-	JumpConfig_t jumpConfig;
-	const int jumpConfigMin;
-	const int jumpConfigMax;
-	int lConfig;
-	int rConfig;
-	const int triggerConfigMin;
-	const int triggerConfigMax;
-	const int triggerDefault;
-	int lTriggerOffset;
-	int rTriggerOffset;
-	const int triggerMin;
-	const int triggerMax;
-	int cXOffset;
-	int cYOffset;
-	const int cMax;
-	const int cMin;
-	int rumble;//0 is off, nonzero is on, higher is stronger
-	const int rumbleMin;
-	const int rumbleMax;
-	const int rumbleDefault;
-	const int rumbleFactory;
-	bool safeMode;
-	int autoInit;
-	int lTrigInitial;
-	int rTrigInitial;
-	int xSnapback;//0 disables the filter entirely, 4 is default
-	int ySnapback;
-	const int snapbackMin;
-	const int snapbackMax;
-	const int snapbackDefault;
-	const int snapbackFactoryAX;
-	const int snapbackFactoryAY;
-	int axSmoothing;
-	int aySmoothing;
-	int cxSmoothing;
-	int cySmoothing;
-	const int smoothingMin;
-	const int smoothingMax;
-	const int snapbackFactoryCX;
-	const int snapbackFactoryCY;
-	const int smoothingFactoryAX;
-	const int smoothingFactoryAY;
-	int axWaveshaping;
-	int ayWaveshaping;
-	int cxWaveshaping;
-	int cyWaveshaping;
-	const int waveshapingMin;
-	const int waveshapingMax;
-	const int waveshapingFactoryAX;
-	const int waveshapingFactoryAY;
-	const int waveshapingFactoryCX;
-	const int waveshapingFactoryCY;
-	int astickCardinalSnapping;
-	int cstickCardinalSnapping;
-	const int cardinalSnappingMin;
-	const int cardinalSnappingMax;
-	const int cardinalSnappingDefault;
-	int astickAnalogScaler;
-	int cstickAnalogScaler;
-	const int analogScalerMin;
-	const int analogScalerMax;
-	const int analogScalerDefault;
-	int tournamentToggle;
-	const int tournamentToggleMin;
-	const int tournamentToggleMax;
-#ifdef PICO_RP2040
-	int interlaceOffset;
-	const int interlaceOffsetMin;
-	const int interlaceOffsetMax;
-#endif //PICO_RP2040
-	ExtrasConfig_s extras[EXTRAS_SIZE];
-} ControlConfig_s;
 
 typedef struct {
 	//What's the max stick distance from the center
@@ -406,6 +363,57 @@ typedef struct {
     uint8_t analogL;
     uint8_t analogR;
 } __attribute__((packed)) GCReport_s;
+
+/** @brief This is a struct for containing all of the
+ * button input data as bits. This saves space
+ * and allows for easier handoff to the various
+ * controller cores in the future.
+**/
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            // D-Pad
+            uint8_t dpad_up         : 1;
+            uint8_t dpad_down       : 1;
+            uint8_t dpad_left       : 1;
+            uint8_t dpad_right      : 1;
+            // Buttons
+            uint8_t button_a       : 1;
+            uint8_t button_b     : 1;
+            uint8_t button_x     : 1;
+            uint8_t button_y    : 1;
+            // Triggers
+            uint8_t trigger_l       : 1;
+            uint8_t trigger_zl      : 1;
+            uint8_t trigger_r       : 1;
+            uint8_t trigger_zr      : 1;
+
+            // Special Functions
+            uint8_t button_plus     : 1;
+            uint8_t button_minus    : 1;
+
+            // Stick clicks
+            uint8_t button_stick_left   : 1;
+            uint8_t button_stick_right  : 1;
+        };
+        uint16_t buttons_all;
+    };
+
+    union
+    {
+        struct
+        {
+            // Menu buttons (Not remappable by API)
+            uint8_t button_capture  : 1;
+            uint8_t button_home     : 1;
+            uint8_t padding         : 6;
+        };
+        uint8_t buttons_system;
+    };
+} __attribute__ ((packed)) phob_button_data_s;
 
 #ifdef __cplusplus
 }

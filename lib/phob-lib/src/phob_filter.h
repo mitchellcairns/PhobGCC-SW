@@ -1,5 +1,5 @@
-#ifndef FILTER_H
-#define FILTER_H
+#ifndef PHOB_FILTER_H
+#define PHOB_FILTER_H
 
 #ifdef __cplusplus
 extern "C"

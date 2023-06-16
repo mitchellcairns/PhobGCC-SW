@@ -10,8 +10,12 @@ extern "C"
 
 // Public variables
 
+// State of buttons that is broadcast
 extern Buttons_u _btn;
+
+// State of buttons internal to the controller
 extern Buttons_u _hardware;
+
 extern RawStick_s _raw;
 extern StickParams_s _aStickParams;
 extern StickParams_s _cStickParams;
@@ -25,11 +29,13 @@ extern float _dT;
 
 // Functions that are expected to be defined by
 // each 'project' for each supported board
-void cb_phob_read_buttons();
+void cb_phob_read_buttons(Buttons_u *btns);
 
-void cb_phob_read_analog();
+void cb_phob_read_sticks();
 
-void cb_phob_rumble(bool enable);
+void cb_phob_read_triggers();
+
+void cb_phob_rumble(bool enable, uint16_t intensity);
 
 void cb_phob_hardware_setup();
 

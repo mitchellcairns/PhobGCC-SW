@@ -7,8 +7,16 @@ extern "C"
 #endif
 
 // Board types
-#define BOARD_TYPE_RP2040 0
-#define BOARD_TYPE_TEENSY 1
+#define PCFG_BOARD_TYPE_RP2040 0
+#define PCFG_BOARD_TYPE_TEENSY 1
+
+// Data GPIO types
+// Determines if one or two GPIO are used for
+// data (some boards may use two data pins and a diode for quicker switching)
+#define PCFG_JOYBUS_DATA_SINGLE 0
+#define PCFG_JOYBUS_DATA_DUAL   1
+
+
 
 #ifdef __cplusplus
 }
