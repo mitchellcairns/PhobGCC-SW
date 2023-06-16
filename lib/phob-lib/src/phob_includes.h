@@ -30,8 +30,11 @@ extern "C"
 #include "phob_types.h"
 
 #include "curve_fitting.h"
-#include "stick_cal.h"
-#include "filter.h"
+
+#include "phob_math.h"
+#include "phob_matrix.h"
+#include "phob_filter.h"
+#include "phob_settings.h"
 
 #include "phob_board_config.h"
 #include "phob.h"

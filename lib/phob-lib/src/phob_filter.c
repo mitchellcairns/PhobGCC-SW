@@ -47,7 +47,7 @@ float filter_dampensnapback(int snapback)
 	}
 }
 
-// Old was runKalman
+// Old name: runKalman
 void filter_kalman(float *xPosFilt, float *yPosFilt, float xZ, float yZ, Settings_s *settings, FilterGains_s *normGains)
 {
 	// Serial.println("Running Kalman");
