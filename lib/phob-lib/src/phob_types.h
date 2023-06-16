@@ -12,6 +12,7 @@ typedef enum
 {
 	PHOB_API_MODE_UNSET,
 	PHOB_API_MODE_GCC,
+	PHOB_API_MODE_VISION,
 	PHOB_API_MODE_XINPUT,
 	PHOB_API_MODE_MAX,
 } PhobAPIMode_t;
@@ -48,8 +49,10 @@ typedef enum
 
 typedef enum
 {
-  X_AXIS,
-  Y_AXIS
+  AX_AXIS,
+  AY_AXIS,
+	CX_AXIS,
+	CY_AXIS
 } WhichAxis_t;
 
 typedef enum
@@ -354,15 +357,34 @@ typedef struct {
 } DataCapture_s;
 
 typedef struct {
-    uint8_t a : 1; uint8_t b : 1; uint8_t x:1; uint8_t y : 1; uint8_t start : 1; uint8_t pad0 : 3;
-    uint8_t dLeft : 1; uint8_t dRight : 1; uint8_t dDown : 1; uint8_t dUp : 1; uint8_t z : 1; uint8_t r : 1; uint8_t l : 1; uint8_t pad1 : 1;
+	union
+	{
+		struct
+		{
+			uint8_t a 		: 1;
+			uint8_t b 		: 1;
+			uint8_t x			: 1;
+			uint8_t y 		: 1;
+			uint8_t start : 1;
+			uint8_t pad0 		: 3;
+			uint8_t dLeft 	: 1;
+			uint8_t dRight 	: 1;
+			uint8_t dDown 	: 1;
+			uint8_t dUp 		: 1;
+			uint8_t z 			: 1;
+			uint8_t r 			: 1;
+			uint8_t l 			: 1;
+			uint8_t pad1 		: 1;
+		};
+		uint16_t buttons_all
+	};
     uint8_t xStick;
     uint8_t yStick;
     uint8_t cxStick;
     uint8_t cyStick;
     uint8_t analogL;
     uint8_t analogR;
-} __attribute__((packed)) GCReport_s;
+} __attribute__((packed)) GCJoybusInput_s;
 
 /** @brief This is a struct for containing all of the
  * button input data as bits. This saves space
@@ -376,28 +398,28 @@ typedef struct
         struct
         {
             // D-Pad
-            uint8_t dpad_up         : 1;
-            uint8_t dpad_down       : 1;
-            uint8_t dpad_left       : 1;
-            uint8_t dpad_right      : 1;
+            uint8_t dup         : 1;
+            uint8_t ddown       : 1;
+            uint8_t dleft       : 1;
+            uint8_t dright      : 1;
             // Buttons
-            uint8_t button_a       : 1;
-            uint8_t button_b     : 1;
-            uint8_t button_x     : 1;
-            uint8_t button_y    : 1;
+            uint8_t a       : 1;
+            uint8_t b     : 1;
+            uint8_t x     : 1;
+            uint8_t y    : 1;
             // Triggers
-            uint8_t trigger_l       : 1;
-            uint8_t trigger_zl      : 1;
-            uint8_t trigger_r       : 1;
-            uint8_t trigger_zr      : 1;
+            uint8_t l       : 1;
+            uint8_t zl      : 1;
+            uint8_t r       : 1;
+            uint8_t zr      : 1;
 
             // Special Functions
-            uint8_t button_plus     : 1;
-            uint8_t button_minus    : 1;
+            uint8_t start    : 1;
+            uint8_t minus    : 1;
 
             // Stick clicks
-            uint8_t button_stick_left   : 1;
-            uint8_t button_stick_right  : 1;
+            uint8_t stick_left   : 1;
+            uint8_t stick_right  : 1;
         };
         uint16_t buttons_all;
     };
@@ -407,13 +429,20 @@ typedef struct
         struct
         {
             // Menu buttons (Not remappable by API)
-            uint8_t button_capture  : 1;
-            uint8_t button_home     : 1;
+            uint8_t capture  : 1;
+            uint8_t home     : 1;
             uint8_t padding         : 6;
         };
         uint8_t buttons_system;
     };
-} __attribute__ ((packed)) phob_button_data_s;
+
+		uint8_t x_axis;
+		uint8_t y_axis;
+		uint8_t cx_axis;
+		uint8_t cy_axis;
+		uint8_t la_axis;
+		uint8_t ra_axis;
+} __attribute__ ((packed)) PhobInput_s;
 
 #ifdef __cplusplus
 }

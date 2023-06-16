@@ -45,18 +45,12 @@ NotchStatus_t _notchStatusDefaults[] = {CARDINAL, TERT_ACTIVE, SECONDARY, TERT_A
 //                                                         up right     up left      down left    down right   notch 1      notch 2      notch 3      notch 4      notch 5      notch 6      notch 7      notch 8
 int _notchAdjOrder[] = {2, 6, 10, 14, 1, 3, 5, 7, 9, 11, 13, 15};
 
-
-
-
-
-
-
 /*
  * stripCalPoints removes the notches from un-cleaned cal points
  * this is so we can get the original values of the notches after the affine transform.
  * there need to be NOTCH_CALIBRATION_POINTS values in the inputs and outputs.
  */
-void stripCalPoints(const float calPointsX[], const float calPointsY[], float strippedPointsX[], float strippedPointsY[])
+void calibration_stripnotches(const float calPointsX[], const float calPointsY[], float strippedPointsX[], float strippedPointsY[])
 {
 	for (int i = 0; i < NOTCH_CALIBRATION_POINTS; i++)
 	{
@@ -71,27 +65,7 @@ void stripCalPoints(const float calPointsX[], const float calPointsY[], float st
 	}
 };
 
-/*
- * computeStickAngles
- * write all the stick angles into the notch angles array array
- * inputs need to be length NOTCH_COUNT+1
- * outputs need to be length NOTCH_COUNT
- */
-void computeStickAngles(float xInput[], float yInput[], float stickAngles[])
-{
-	debug_println("Computed stick angles:");
-	for (int i = 0; i < NOTCH_COUNT; i++)
-	{
-		if (i % 2 == 0)
-		{ // cardinal or diagonal
-			stickAngles[i] = _notchAngleDefaults[i];
-		}
-		else
-		{
-			math_angleonsphere(xInput[i + 1], yInput[i + 1], &stickAngles[i]);
-		}
-	}
-};
+
 // sets notches to measured values if absent
 void cleanNotches(float notchAngles[], float measuredNotchAngles[], NotchStatus_t notchStatus[])
 {

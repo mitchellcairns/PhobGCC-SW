@@ -3,9 +3,7 @@
 // Internal mode
 PhobAPIMode_t _phob_api_mode = PHOB_API_MODE_UNSET;
 
-Buttons_u _btn = {0};
-
-const GCReport_s defaultGcReport = {
+const GCJoybusInput_s defaultGcReport = {
     .a=0, .b=0, .x=0, .y=0, .start=0, .pad0=0,
     .dLeft=0, .dRight=0, .dDown=0, .dUp=0, .z=0, .r=0, .l=0, .pad1=1,
     .xStick=127,

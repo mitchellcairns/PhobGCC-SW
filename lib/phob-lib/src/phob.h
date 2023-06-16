@@ -8,25 +8,6 @@ extern "C"
 
 #include "phob_includes.h"
 
-// Public variables
-
-// State of buttons that is broadcast
-extern Buttons_u _btn;
-
-// State of buttons internal to the controller
-extern Buttons_u _hardware;
-
-extern RawStick_s _raw;
-extern StickParams_s _aStickParams;
-extern StickParams_s _cStickParams;
-
-extern const GCReport_s defaultGcReport;
-
-extern float _ADCScale;
-extern float _ADCScaleFactor;
-extern int _rumblePower;
-extern float _dT;
-
 // Functions that are expected to be defined by
 // each 'project' for each supported board
 void cb_phob_read_buttons(Buttons_u *btns);

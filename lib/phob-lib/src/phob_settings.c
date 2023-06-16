@@ -1,5 +1,67 @@
 #include "phob_settings.h"
 
+Settings_s _phob_loaded_settings = {0};
+Settings_s* _phob_loaded_settings_ptr = &_phob_loaded_settings;
+uint16_t _phob_rumble_power = 0;
+
+// Returns a pointer to our global settings
+Settings_s* settings_get_ptr()
+{
+	return _phob_loaded_settings_ptr;
+}
+
+// Old name: calcRumblePower
+uint16_t settings_calculate_rumblepower(int rumble){
+	if(rumble > 0) {
+		return pow(2.0, 7+((rumble-3)/8.0)); //should be 256 when rumble is 11
+	} else {
+		return 0;
+	}
+}
+
+// Old name: changeRumble
+// Adjusts rumble and returns the new value
+int settings_adjust_rumble(int adjustment)
+{
+	debug_println("Adjusting rumble.");
+	int c = _phob_loaded_settings.rumble;
+
+	c += adjustment;
+	if (c > RUMBLE_MAX) c = RUMBLE_MAX;
+	if (c < 0) c = 0;
+
+	_phob_loaded_settings.rumble = c;
+
+	// Convert setting into proper rumble power
+	_phob_rumble_power = settings_calculaterumblepower(c);
+	return c;
+	// animate_showrumble(750);
+}
+
+// Returns the rumble power for PWM purposes
+uint16_t settings_get_rumblepower()
+{
+	return _phob_rumble_power;
+}
+
+// <0 toggles. 0 disables. 1> enables.
+// Returns the new value
+bool settings_adjust_autoinit(int val)
+{
+	if (val < 0)
+	{
+		// Inverts setting, only one or the other.
+		_phob_loaded_settings.autoInit = !_phob_loaded_settings.autoInit;
+	}
+	else
+	{
+		_phob_loaded_settings.autoInit = (val > 0);
+	}
+
+	return _phob_loaded_settings.autoInit;
+}
+
+
 // Original workflow
 // Load settings -> recomputeGains -> cleanCalPoints -> linearizeCal -> notchCalibrate
 
